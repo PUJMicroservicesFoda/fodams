@@ -50,12 +50,14 @@ describe('Parsing tests', () => {
 
             tradeOffs {
                 Performance conflictsWith FineGranularity strength strong;
-                Performance supports Throughput strength weak;
-                Performance prefers Latency strength medium;
+                Performance increases Throughput strength weak;
+                Throughput reduces Latency strength medium;
+                Performance moreImportantThan Latency strength medium;
             }
 
             configuration {
-                selected { QualityAttributes, FunctionalSuitability, Granularity, CoarseGranularity, Performance, Latency };
+                priorityGroup { QualityAttributes, FunctionalSuitability, Granularity, CoarseGranularity };
+                priorityGroup { Performance, Latency };
             }
         `);
 
@@ -78,7 +80,7 @@ describe('Parsing tests', () => {
                         'Latency',
                         'Throughput'
                 ]);
-                expect(model.configuration.selected.map(selected => selected.$refText)).toEqual([
+                expect(model.configuration.priorityGroups.flatMap(group => group.selected.map(selected => selected.$refText))).toEqual([
                         'QualityAttributes',
                         'FunctionalSuitability',
                         'Granularity',
@@ -92,8 +94,9 @@ describe('Parsing tests', () => {
                 ]);
                 expect(model.tradeOffs.relations.map(r => `${r.left.$refText} ${r.relation} ${r.right.$refText} (${r.strength ?? 'medium'})`)).toEqual([
                         'Performance conflictsWith FineGranularity (strong)',
-                        'Performance supports Throughput (weak)',
-                        'Performance prefers Latency (medium)'
+                    'Performance increases Throughput (weak)',
+                    'Throughput reduces Latency (medium)',
+                    'Performance moreImportantThan Latency (medium)'
                 ]);
     });
 });

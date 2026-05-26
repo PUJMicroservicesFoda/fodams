@@ -1,3 +1,4 @@
+export * from './foda-ms-formatter.js';
 export * from './foda-ms-module.js';
 export * from './foda-ms-validator.js';
 export * from './generated/ast.js';

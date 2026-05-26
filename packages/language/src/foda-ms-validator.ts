@@ -87,20 +87,24 @@ export function analyzeModel(model: Model): AnalysisResult {
         }
     }
 
-    const selectedNames: string[] = [];
     const selectedSet = new Set<string>();
-    for (const selected of model.configuration.selected) {
-        if (selected.ref) {
-            const featureName = selected.ref.name;
-            selectedNames.push(featureName);
-            if (selectedSet.has(featureName)) {
+    const priorityGroupByFeature = new Map<string, number>();
+    for (const [groupIndex, group] of model.configuration.priorityGroups.entries()) {
+        for (const selected of group.selected) {
+            const featureName = selected.ref?.name;
+            if (!featureName) {
+                continue;
+            }
+            if (priorityGroupByFeature.has(featureName)) {
                 findings.push({
-                    severity: 'warning',
-                    message: `Feature '${featureName}' is selected multiple times.`,
-                    node: model.configuration,
+                    severity: 'error',
+                    message: `Feature '${featureName}' appears in multiple priority groups.`,
+                    node: group,
                     property: 'selected'
                 });
+                continue;
             }
+            priorityGroupByFeature.set(featureName, groupIndex);
             selectedSet.add(featureName);
         }
     }
@@ -111,7 +115,7 @@ export function analyzeModel(model: Model): AnalysisResult {
                 severity: 'error',
                 message: `Selected feature '${selectedName}' is not present in the feature tree.`,
                 node: model.configuration,
-                property: 'selected'
+                property: 'priorityGroups'
             });
         }
     }
@@ -197,7 +201,7 @@ export function analyzeModel(model: Model): AnalysisResult {
     let activeTradeOffs = 0;
 
     for (const relation of model.tradeOffs.relations) {
-        const evaluated = evaluateTradeOffRelation(relation, selectedSet);
+        const evaluated = evaluateTradeOffRelation(relation, selectedSet, priorityGroupByFeature);
         if (!evaluated) {
             continue;
         }
@@ -324,7 +328,11 @@ function tradeOffWeight(strength: TradeOffStrength | undefined): number {
     }
 }
 
-function evaluateTradeOffRelation(relation: TradeOffRelation, selectedSet: Set<string>): {
+function evaluateTradeOffRelation(
+    relation: TradeOffRelation,
+    selectedSet: Set<string>,
+    priorityGroupByFeature: Map<string, number>
+): {
     weight: number;
     value: number;
     warningMessage?: string;
@@ -340,15 +348,16 @@ function evaluateTradeOffRelation(relation: TradeOffRelation, selectedSet: Set<s
     const weight = tradeOffWeight(relation.strength);
 
     if (relation.relation === 'conflictsWith') {
-        const active = leftSelected || rightSelected;
-        if (!active) {
+        if (!leftSelected || !rightSelected) {
             return undefined;
         }
-        if (leftSelected && rightSelected) {
+        const leftGroup = priorityGroupByFeature.get(left);
+        const rightGroup = priorityGroupByFeature.get(right);
+        if (leftGroup !== undefined && rightGroup !== undefined && leftGroup === rightGroup) {
             return {
                 weight,
                 value: -weight,
-                warningMessage: `Trade-off warning: '${left}' conflicts with '${right}', but both are selected.`
+                warningMessage: `Trade-off warning: '${left}' conflicts with '${right}', but both are in the same priority group.`
             };
         }
         return {
@@ -361,7 +370,7 @@ function evaluateTradeOffRelation(relation: TradeOffRelation, selectedSet: Set<s
         return undefined;
     }
 
-    if (relation.relation === 'supports') {
+    if (relation.relation === 'increases') {
         if (rightSelected) {
             return {
                 weight,
@@ -371,20 +380,40 @@ function evaluateTradeOffRelation(relation: TradeOffRelation, selectedSet: Set<s
         return {
             weight,
             value: -weight,
-            warningMessage: `Trade-off warning: '${left}' supports '${right}', but '${right}' is not selected.`
+            warningMessage: `Trade-off warning: '${left}' increases '${right}', but '${right}' is not selected.`
         };
     }
 
-    if (rightSelected) {
+    if (relation.relation === 'reduces') {
+        if (rightSelected) {
+            return {
+                weight,
+                value: -weight,
+                warningMessage: `Trade-off warning: '${left}' reduces '${right}', but both are selected.`
+            };
+        }
         return {
             weight,
-            value: -weight,
-            warningMessage: `Trade-off warning: '${left}' prefers to be selected over '${right}', but both are selected.`
+            value: weight
+        };
+    }
+
+    if (!rightSelected) {
+        return undefined;
+    }
+
+    const leftGroup = priorityGroupByFeature.get(left);
+    const rightGroup = priorityGroupByFeature.get(right);
+    if (leftGroup !== undefined && rightGroup !== undefined && leftGroup < rightGroup) {
+        return {
+            weight,
+            value: weight
         };
     }
     return {
         weight,
-        value: weight
+        value: -weight,
+        warningMessage: `Trade-off warning: '${left}' must be in a higher-priority group than '${right}'.`
     };
 }
 

@@ -9,7 +9,8 @@ export function generateAnalysisReport(model: Model, filePath: string, destinati
     const generatedFilePath = `${path.join(data.destination, data.name)}.analysis.txt`;
     const result = analyzeModel(model);
 
-    const selectedFeatures = model.configuration.selected
+    const selectedFeatures = model.configuration.priorityGroups
+        .flatMap(group => group.selected)
         .map(selected => selected.ref?.name)
         .filter((name): name is string => Boolean(name));
 

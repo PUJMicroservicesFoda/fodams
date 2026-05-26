@@ -112,63 +112,33 @@ constraints {
 }
 
 tradeOffs {
-    // SingleUnitDeployment requires HighCoupling;
-    // SingleUnitDeployment conflictsWith MultipleUnitDeployment;
-    // HighEnergyConsumption conflictsWith LowEnergyConsumption;
-    // Consistency conflictsWith Availability;
-    // Latency conflictsWith Consistency;
-    // FineGranularity conflictsWith Performance;
-    // FineGranularity conflictsWith SingleUnitDeployment;
-    // Consistency conflictsWith HighCoupling;
-    // HighCoupling conflictsWith Performance;
-    // Security conflictsWith Performance;
-    // Security conflictsWith Scalability;
-
-    // Security supports Complexity;
-    // SingleUnitDeployment supports HighCoupling;
-    // SingleUnitDeployment conflictsWith Scalability;
-
-    // Availability supports HighEnergyConsumption;
-    // Scalability supports HighEnergyConsumption;
-    // Performance supports HighEnergyConsumption;
-    // Reliability supports HighEnergyConsumption;
-
-    // Availability conflictsWith LowEnergyConsumption;
-    // Elasticity conflictsWith LowEnergyConsumption;
-    // Availability supports Complexity;
-    // Availability conflictsWith Maintainability;
-    // Availability conflictsWith Scalability;
-    // Performance supports Complexity;
-
-    // Security prefers LowCoupling;
-    // Reliability conflictsWith LowCoupling;
-          Consistency     conflictsWith    Availability          ;
-      Latency               conflictsWith    Consistency           ;
-      FineGranularity       conflictsWith    Performance           ;
-      FineGranularity       conflictsWith    SingleUnitDeployment  ;
-      Consistency           conflictsWith    HighCoupling          ;
-      HighCoupling          conflictsWith    Performance           ;
-      Security              conflictsWith    Performance           ;
-      Security              conflictsWith    Scalability           ;
-      Security              supports    Complexity            ;
-      SingleUnitDeployment  supports    HighCoupling          ;
-      SingleUnitDeployment  conflictsWith    Scalability           ;
-      Availability          supports    HighEnergyConsumption ;
-      Scalability           supports    HighEnergyConsumption ;
-      Performance           supports    HighEnergyConsumption ;
-      Reliability           supports    HighEnergyConsumption ;
-      Availability          conflictsWith    LowEnergyConsumption  ;
-      Elasticity            conflictsWith    LowEnergyConsumption  ;
-      Availability          supports    Complexity            ;
-      Availability          conflictsWith    Maintainability       ;
-      Availability          conflictsWith    Scalability           ;
-      Performance           supports    Complexity            ;
-      Security              supports    LowCoupling           ;
-      Reliability           conflictsWith    LowCoupling     ;
+    Consistency           moreImportantThan     Availability          ;
+    Latency               conflictsWith     Consistency           ;
+    FineGranularity       conflictsWith     Performance           ;
+    FineGranularity       conflictsWith     SingleUnitDeployment  ;
+    Consistency           conflictsWith     HighCoupling          ;
+    HighCoupling          conflictsWith     Performance           ;
+    Security              reduces           Performance           ;
+    Security              reduces           Scalability           ;
+    Security              increases         Complexity            ;
+    // SingleUnitDeployment  increases         HighCoupling          ;
+    SingleUnitDeployment  conflictsWith     Scalability           ;
+    Availability          increases         EnergyConsumption ;
+    Scalability           increases         EnergyConsumption ;
+    Performance           increases         EnergyConsumption ;
+    Reliability           increases         EnergyConsumption ;
+    Availability          increases         EnergyConsumption  ;
+    Elasticity            increases         EnergyConsumption  ;
+    Availability          increases         Complexity            ;
+    Availability          conflictsWith     Maintainability       ;
+    Availability          conflictsWith     Scalability           ;
+    Performance           increases         Complexity            ;
+    Security              increases         Coupling           ;
+    Reliability           increases         Coupling     ;
 }
 
 configuration {
-    selected {
+    priorityGroup {
         QualityAttributes,
 
         FunctionalSuitability,
@@ -195,7 +165,6 @@ configuration {
         Interoperability,
 
         Reliability,
-        Availability,
         FaultTolerance,
         Robustness,
         Resiliency,
@@ -215,4 +184,9 @@ configuration {
         Portability,
         Adaptability
     };
+
+    priorityGroup {
+        Availability
+
+    }
 }

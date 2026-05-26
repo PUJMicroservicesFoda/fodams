@@ -47,11 +47,11 @@ describe('Linking tests', () => {
             }
 
             tradeOffs {
-                Security supports Availability strength strong;
+                Security increases Availability strength strong;
             }
 
             configuration {
-                selected { QualityAttributes, Security, Availability };
+                priorityGroup { QualityAttributes, Security, Availability };
             }
         `);
 
@@ -63,7 +63,9 @@ describe('Linking tests', () => {
             checkDocumentValid(document)
                 || [
                     document.parseResult.value.tree.root.feature.ref?.name || document.parseResult.value.tree.root.feature.error?.message,
-                    ...document.parseResult.value.configuration.selected.map(s => s.ref?.name || s.error?.message),
+                    ...document.parseResult.value.configuration.priorityGroups.flatMap(group =>
+                        group.selected.map(s => s.ref?.name || s.error?.message)
+                    ),
                     ...document.parseResult.value.hardConstraints.constraints.map(c =>
                         `${c.left.ref?.name || c.left.error?.message}:${c.right.ref?.name || c.right.error?.message}`
                     )

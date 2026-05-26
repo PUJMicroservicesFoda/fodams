@@ -44,12 +44,13 @@ describe('Validating', () => {
             }
 
             tradeOffs {
-                Security supports Availability strength strong;
-                Performance supports Latency strength medium;
+                Security increases Availability strength strong;
+                Performance increases Latency strength medium;
             }
 
             configuration {
-                selected { QualityAttributes, Security, Availability, Performance, Latency };
+                priorityGroup { QualityAttributes, Security, Availability };
+                priorityGroup { Performance, Latency };
             }
         `);
 
@@ -83,7 +84,7 @@ describe('Validating', () => {
             }
 
             configuration {
-                selected { QualityAttributes, Security };
+                priorityGroup { QualityAttributes, Security };
             }
         `);
 
@@ -111,20 +112,52 @@ describe('Validating', () => {
 
             tradeOffs {
                 Performance conflictsWith Scalability strength strong;
-                Scalability supports HighEnergyConsumption strength medium;
+                Scalability increases HighEnergyConsumption strength medium;
+                Performance reduces Scalability strength weak;
             }
 
             configuration {
-                selected { QualityAttributes, Performance, Scalability };
+                priorityGroup { QualityAttributes, Performance, Scalability };
             }
         `);
 
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
-        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' conflicts with 'Scalability', but both are selected."));
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' conflicts with 'Scalability', but both are in the same priority group."));
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' reduces 'Scalability', but both are selected."));
 
         const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.activeTradeOffs).toBe(2);
+        expect(analysis.activeTradeOffs).toBe(3);
         expect(analysis.score).toBe(0);
+    });
+
+    test('check moreImportantThan priority ordering', async () => {
+        document = await parse(`
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Security;
+                quality Performance;
+            }
+
+            featureTree QualityAttributes {
+                optional Security;
+                optional Performance;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Security moreImportantThan Performance strength strong;
+            }
+
+            configuration {
+                priorityGroup { QualityAttributes, Performance };
+                priorityGroup { Security };
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Security' must be in a higher-priority group than 'Performance'."));
     });
 });
 

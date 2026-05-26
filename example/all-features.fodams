@@ -59,13 +59,13 @@ constraints {
 
 tradeOffs {
     Performance conflictsWith HighEnergyConsumption strength strong;
-    Performance supports Throughput;
-    Reusability prefers Testability strength medium;
-    Security supports Integrity;
+    Performance increases Throughput;
+    Reusability moreImportantThan Testability strength medium;
+    Security increases Integrity;
 }
 
 configuration {
-    selected {
+    priorityGroup {
         QualityAttributes,
         Performance,
         Latency,

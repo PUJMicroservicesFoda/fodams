@@ -61,15 +61,18 @@ TradeOffRelation:
     ';';
 
 TradeOffKind returns string:
-    'conflictsWith' | 'supports' | 'prefers';
+    'conflictsWith' | 'increases' | 'reduces' | 'moreImportantThan';
 
 TradeOffStrength returns string:
     'weak' | 'medium' | 'strong';
 
 Configuration:
     'configuration' '{'
-        'selected' '{' selected+=[QualityAttributeDeclaration:ID] (',' selected+=[QualityAttributeDeclaration:ID])* '}' ';'
+        priorityGroups+=PriorityGroup+
     '}';
+
+PriorityGroup:
+    'priorityGroup' '{' selected+=[QualityAttributeDeclaration:ID] (',' selected+=[QualityAttributeDeclaration:ID])* '}' ';';
 
 hidden terminal WS: /\s+/;
 terminal ID: /[_a-zA-Z][\w_]*/;

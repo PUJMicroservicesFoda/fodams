@@ -20,10 +20,10 @@ constraints {
 }
 
 tradeOffs {
-    Security supports Availability strength strong;
-    Performance supports Latency strength medium;
+    Security increases Availability strength strong;
+    Performance increases Latency strength medium;
 }
 
 configuration {
-    selected { QualityAttributes, Security, Performance, Availability };
+    priorityGroup { QualityAttributes, Security, Performance, Availability };
 }

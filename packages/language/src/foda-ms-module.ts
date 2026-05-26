@@ -1,6 +1,7 @@
 import { type Module, inject } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
 import { FodaMsGeneratedModule, FodaMsGeneratedSharedModule } from './generated/module.js';
+import { FodaMsFormatter } from './foda-ms-formatter.js';
 import { FodaMsValidator, registerValidationChecks } from './foda-ms-validator.js';
 
 /**
@@ -24,6 +25,9 @@ export type FodaMsServices = LangiumServices & FodaMsAddedServices
  * selected services, while the custom services must be fully specified.
  */
 export const FodaMsModule: Module<FodaMsServices, PartialLangiumServices & FodaMsAddedServices> = {
+    lsp: {
+        Formatter: () => new FodaMsFormatter()
+    },
     validation: {
         FodaMsValidator: () => new FodaMsValidator()
     }
