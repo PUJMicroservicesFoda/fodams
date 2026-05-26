@@ -1,0 +1,92 @@
+qualityAttributes {
+    quality QualityAttributes;
+    quality FunctionalSuitability;
+    quality Granularity;
+    quality CoarseGranularity;
+    quality FineGranularity;
+    quality Security;
+    quality Consistency;
+    quality Performance;
+    quality Latency;
+    quality Throughput;
+    quality Scalability;
+    quality Reliability;
+    quality Availability;
+    quality Maintainability;
+    quality Complexity;
+    quality Sustainability;
+    quality EnergyConsumption;
+    quality HighEnergyConsumption;
+    quality LowEnergyConsumption;
+    quality Compatibility;
+    quality Coupling;
+    quality LowCoupling;
+    quality HighCoupling;
+}
+
+featureTree QualityAttributes {
+    optional FunctionalSuitability {
+        mandatory Granularity {
+            alternative { CoarseGranularity, FineGranularity };
+        };
+    };
+    optional Security;
+    optional Performance {
+        or { Latency, Throughput };
+        optional Scalability;
+    };
+    optional Reliability {
+        optional Availability;
+    };
+    optional Maintainability {
+        optional Complexity;
+    };
+    optional Sustainability {
+        mandatory EnergyConsumption {
+            alternative { HighEnergyConsumption, LowEnergyConsumption };
+        };
+    };
+    optional Compatibility {
+        mandatory Coupling {
+            alternative { LowCoupling, HighCoupling };
+        };
+    };
+};
+
+constraints {
+    FineGranularity excludes Performance;
+    Security requires Complexity;
+    Performance requires Complexity;
+    Reliability excludes LowCoupling;
+}
+
+tradeOffs {
+    Latency conflictsWith Consistency strength strong;
+    Performance supports Scalability strength medium;
+    Availability supports HighEnergyConsumption strength weak;
+    Security prefers LowCoupling;
+}
+
+configuration {
+    selected {
+        QualityAttributes,
+        FunctionalSuitability,
+        Granularity,
+        CoarseGranularity,
+        Security,
+        Performance,
+        Latency,
+        Throughput,
+        Scalability,
+        Reliability,
+        Availability,
+        Maintainability,
+        Complexity,
+        Sustainability,
+        EnergyConsumption,
+        HighEnergyConsumption,
+        Compatibility,
+        Coupling,
+        LowCoupling
+    };
+}

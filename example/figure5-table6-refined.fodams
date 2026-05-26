@@ -1,0 +1,218 @@
+qualityAttributes {
+    quality QualityAttributes;
+    quality FunctionalSuitability;
+    quality Consistency;
+    quality Granularity;
+    quality CoarseGranularity;
+    quality FineGranularity;
+
+    quality Security;
+    quality Confidentiality;
+    quality Integrity;
+    quality Authenticity;
+
+    quality Performance;
+    quality Latency;
+    quality Throughput;
+    quality ResourceUtilization;
+    quality Elasticity;
+    quality Scalability;
+    quality ExecutionCost;
+
+    quality Compatibility;
+    quality Coupling;
+    quality LowCoupling;
+    quality HighCoupling;
+    quality Interoperability;
+
+    quality Reliability;
+    quality Availability;
+    quality FaultTolerance;
+    quality Robustness;
+    quality Resiliency;
+
+    quality Maintainability;
+    quality Complexity;
+    quality Reusability;
+    quality Testability;
+    quality Deployment;
+    quality SingleUnitDeployment;
+    quality MultipleUnitDeployment;
+    quality Extensibility;
+    quality Sustainability;
+    quality EnergyConsumption;
+    quality HighEnergyConsumption;
+    quality LowEnergyConsumption;
+    quality Flexibility;
+
+    quality Portability;
+    quality Adaptability;
+}
+
+featureTree QualityAttributes {
+    mandatory FunctionalSuitability {
+        optional Consistency;
+        mandatory Granularity {
+            alternative { CoarseGranularity, FineGranularity };
+        };
+    };
+
+    optional Security {
+        optional Confidentiality;
+        optional Integrity;
+        optional Authenticity;
+    };
+
+    optional Performance {
+        optional Latency;
+        optional Throughput;
+        optional ResourceUtilization;
+        optional Elasticity;
+        optional Scalability;
+        optional ExecutionCost;
+    };
+
+    optional Compatibility {
+        optional Coupling {
+            alternative { LowCoupling, HighCoupling };
+        };
+        optional Interoperability;
+    };
+
+    optional Reliability {
+        optional Availability;
+        optional FaultTolerance;
+        optional Robustness;
+        optional Resiliency;
+    };
+
+    optional Maintainability {
+        optional Complexity;
+        optional Reusability;
+        optional Testability;
+        optional Deployment {
+            alternative { SingleUnitDeployment, MultipleUnitDeployment };
+        };
+        optional Extensibility;
+        optional Sustainability {
+            optional EnergyConsumption {
+                alternative { HighEnergyConsumption, LowEnergyConsumption };
+            };
+        };
+        optional Flexibility;
+    };
+
+    optional Portability {
+        optional Adaptability;
+    };
+};
+
+constraints {
+    // Keep hard constraints only for true structural incompatibilities/dependencies.
+}
+
+tradeOffs {
+    // SingleUnitDeployment requires HighCoupling;
+    // SingleUnitDeployment conflictsWith MultipleUnitDeployment;
+    // HighEnergyConsumption conflictsWith LowEnergyConsumption;
+    // Consistency conflictsWith Availability;
+    // Latency conflictsWith Consistency;
+    // FineGranularity conflictsWith Performance;
+    // FineGranularity conflictsWith SingleUnitDeployment;
+    // Consistency conflictsWith HighCoupling;
+    // HighCoupling conflictsWith Performance;
+    // Security conflictsWith Performance;
+    // Security conflictsWith Scalability;
+
+    // Security supports Complexity;
+    // SingleUnitDeployment supports HighCoupling;
+    // SingleUnitDeployment conflictsWith Scalability;
+
+    // Availability supports HighEnergyConsumption;
+    // Scalability supports HighEnergyConsumption;
+    // Performance supports HighEnergyConsumption;
+    // Reliability supports HighEnergyConsumption;
+
+    // Availability conflictsWith LowEnergyConsumption;
+    // Elasticity conflictsWith LowEnergyConsumption;
+    // Availability supports Complexity;
+    // Availability conflictsWith Maintainability;
+    // Availability conflictsWith Scalability;
+    // Performance supports Complexity;
+
+    // Security prefers LowCoupling;
+    // Reliability conflictsWith LowCoupling;
+          Consistency     conflictsWith    Availability          ;
+      Latency               conflictsWith    Consistency           ;
+      FineGranularity       conflictsWith    Performance           ;
+      FineGranularity       conflictsWith    SingleUnitDeployment  ;
+      Consistency           conflictsWith    HighCoupling          ;
+      HighCoupling          conflictsWith    Performance           ;
+      Security              conflictsWith    Performance           ;
+      Security              conflictsWith    Scalability           ;
+      Security              supports    Complexity            ;
+      SingleUnitDeployment  supports    HighCoupling          ;
+      SingleUnitDeployment  conflictsWith    Scalability           ;
+      Availability          supports    HighEnergyConsumption ;
+      Scalability           supports    HighEnergyConsumption ;
+      Performance           supports    HighEnergyConsumption ;
+      Reliability           supports    HighEnergyConsumption ;
+      Availability          conflictsWith    LowEnergyConsumption  ;
+      Elasticity            conflictsWith    LowEnergyConsumption  ;
+      Availability          supports    Complexity            ;
+      Availability          conflictsWith    Maintainability       ;
+      Availability          conflictsWith    Scalability           ;
+      Performance           supports    Complexity            ;
+      Security              supports    LowCoupling           ;
+      Reliability           conflictsWith    LowCoupling     ;
+}
+
+configuration {
+    selected {
+        QualityAttributes,
+
+        FunctionalSuitability,
+        Consistency,
+        Granularity,
+        CoarseGranularity,
+
+        Security,
+        Confidentiality,
+        Integrity,
+        Authenticity,
+
+        Performance,
+        Latency,
+        Throughput,
+        ResourceUtilization,
+        Elasticity,
+        Scalability,
+        ExecutionCost,
+
+        Compatibility,
+        Coupling,
+        LowCoupling,
+        Interoperability,
+
+        Reliability,
+        Availability,
+        FaultTolerance,
+        Robustness,
+        Resiliency,
+
+        Maintainability,
+        Complexity,
+        Reusability,
+        Testability,
+        Deployment,
+        MultipleUnitDeployment,
+        Extensibility,
+        Sustainability,
+        EnergyConsumption,
+        HighEnergyConsumption,
+        Flexibility,
+
+        Portability,
+        Adaptability
+    };
+}

@@ -9,3 +9,5 @@ out/
 syntaxes/
 *.tsbuildinfo
 *.vsix
+
+generated/

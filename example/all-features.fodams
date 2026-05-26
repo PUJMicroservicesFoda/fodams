@@ -1,0 +1,88 @@
+qualityAttributes {
+    quality QualityAttributes;
+    quality Performance;
+    quality Latency;
+    quality Throughput;
+    quality Scalability;
+    quality Security;
+    quality Confidentiality;
+    quality Integrity;
+    quality Maintainability;
+    quality Reusability;
+    quality Testability;
+    quality Deployment;
+    quality SingleUnitDeployment;
+    quality MultipleUnitDeployment;
+    quality Sustainability;
+    quality EnergyConsumption;
+    quality HighEnergyConsumption;
+    quality LowEnergyConsumption;
+    quality Compatibility;
+    quality Coupling;
+    quality LowCoupling;
+    quality HighCoupling;
+}
+
+featureTree QualityAttributes {
+    mandatory Performance {
+        or { Latency, Throughput };
+        optional Scalability;
+    };
+    mandatory Security {
+        mandatory Confidentiality;
+        mandatory Integrity;
+    };
+    optional Maintainability {
+        optional Reusability;
+        optional Testability;
+        optional Deployment {
+            alternative { SingleUnitDeployment, MultipleUnitDeployment };
+        };
+    };
+    optional Sustainability {
+        mandatory EnergyConsumption {
+            alternative { HighEnergyConsumption, LowEnergyConsumption };
+        };
+    };
+    optional Compatibility {
+        mandatory Coupling {
+            alternative { LowCoupling, HighCoupling };
+        };
+    };
+};
+
+constraints {
+    Performance requires Latency;
+    SingleUnitDeployment requires HighCoupling;
+    HighCoupling excludes Performance;
+}
+
+tradeOffs {
+    Performance conflictsWith HighEnergyConsumption strength strong;
+    Performance supports Throughput;
+    Reusability prefers Testability strength medium;
+    Security supports Integrity;
+}
+
+configuration {
+    selected {
+        QualityAttributes,
+        Performance,
+        Latency,
+        Throughput,
+        Scalability,
+        Security,
+        Confidentiality,
+        Integrity,
+        Maintainability,
+        Reusability,
+        Deployment,
+        MultipleUnitDeployment,
+        Sustainability,
+        EnergyConsumption,
+        HighEnergyConsumption,
+        Compatibility,
+        Coupling,
+        LowCoupling
+    };
+}
