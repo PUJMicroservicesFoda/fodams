@@ -1,0 +1,16 @@
+{
+    "projectName": "FodaMs",
+    "languages": [
+        {
+            "id": "foda-ms",
+            "grammar": "src/foda-ms.langium",
+            "fileExtensions": [
+                "fodams"
+            ],
+            "textMate": {
+                "out": "syntaxes/foda-ms.tmLanguage.json"
+            }
+        }
+    ],
+    "out": "src/generated"
+}
