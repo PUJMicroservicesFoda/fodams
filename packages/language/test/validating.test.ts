@@ -49,8 +49,9 @@ describe('Validating', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Security, Availability };
-                priorityGroup { Performance, Latency };
+                priorityGroup { QualityAttributes, Security, Performance };
+                priorityGroup { Availability };
+                priorityGroup { Latency };
             }
         `);
 
@@ -111,23 +112,24 @@ describe('Validating', () => {
             }
 
             tradeOffs {
-                Performance conflictsWith Scalability strength strong;
-                Scalability increases HighEnergyConsumption strength medium;
-                Performance reduces Scalability strength weak;
+                Performance conflictsWith Scalability;
+                Scalability increases HighEnergyConsumption;
+                Performance reduces Scalability;
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Performance, Scalability };
+                priorityGroup { QualityAttributes, Performance, Scalability, HighEnergyConsumption };
             }
         `);
 
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' conflicts with 'Scalability', but both are in the same priority group."));
-        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' reduces 'Scalability', but both are selected."));
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Scalability' increases 'HighEnergyConsumption', but both are in the same priority group. Consider putting them in different priority groups."));
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' reduces 'Scalability', but both are in the same priority group. Consider putting them in different priority groups."));
 
         const analysis = analyzeModel(document!.parseResult.value);
         expect(analysis.activeTradeOffs).toBe(3);
-        expect(analysis.score).toBe(0);
+        expect(analysis.score).toBe(33);
     });
 
     test('check moreImportantThan priority ordering', async () => {

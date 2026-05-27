@@ -62,7 +62,7 @@ describe('Linking tests', () => {
             //  the referenced AST element as well as for a potential error message;
             checkDocumentValid(document)
                 || [
-                    document.parseResult.value.tree.root.feature.ref?.name || document.parseResult.value.tree.root.feature.error?.message,
+                    document.parseResult.value.tree.root,
                     ...document.parseResult.value.configuration.priorityGroups.flatMap(group =>
                         group.selected.map(s => s.ref?.name || s.error?.message)
                     ),

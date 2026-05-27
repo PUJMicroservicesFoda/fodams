@@ -5,6 +5,7 @@ import {
     isOrRelation,
     type FodaMsAstType,
     type FeatureNode,
+    type FeatureTree,
     type Model,
     type TradeOffRelation,
     type TradeOffStrength
@@ -56,7 +57,7 @@ export function registerValidationChecks(services: FodaMsServices) {
 export function analyzeModel(model: Model): AnalysisResult {
     const findings: AnalysisFinding[] = [];
 
-    const declarations = model.declarations;
+    const declarations = model.qualityAttributes.declarations;
     const declaredNames = new Set<string>();
     const duplicateDeclarations = new Set<string>();
 
@@ -73,7 +74,7 @@ export function analyzeModel(model: Model): AnalysisResult {
         declaredNames.add(declaration.name);
     }
 
-    const treeContext = collectTreeAnalysis(model.tree.root);
+    const treeContext = collectTreeAnalysis(model.tree);
     for (const [featureName, nodes] of treeContext.nodesByFeature.entries()) {
         if (nodes.length > 1) {
             for (const repeatedNode of nodes.slice(1)) {
@@ -120,9 +121,12 @@ export function analyzeModel(model: Model): AnalysisResult {
         }
     }
 
+    const selectedForTreeRules = new Set(selectedSet);
+    selectedForTreeRules.add(model.tree.root);
+
     for (const [child, parents] of treeContext.parentByChild.entries()) {
         if (selectedSet.has(child)) {
-            const hasSelectedParent = [...parents].some(parent => selectedSet.has(parent));
+            const hasSelectedParent = [...parents].some(parent => selectedForTreeRules.has(parent));
             if (!hasSelectedParent) {
                 findings.push({
                     severity: 'error',
@@ -135,7 +139,7 @@ export function analyzeModel(model: Model): AnalysisResult {
     }
 
     for (const edge of treeContext.mandatoryEdges) {
-        if (selectedSet.has(edge.parent) && !selectedSet.has(edge.child)) {
+        if (selectedForTreeRules.has(edge.parent) && !selectedForTreeRules.has(edge.child)) {
             findings.push({
                 severity: 'error',
                 message: `Feature '${edge.child}' is mandatory when '${edge.parent}' is selected.`,
@@ -146,8 +150,8 @@ export function analyzeModel(model: Model): AnalysisResult {
     }
 
     for (const group of treeContext.orGroups) {
-        if (selectedSet.has(group.parent)) {
-            const selectedChildren = group.children.filter(child => selectedSet.has(child)).length;
+        if (selectedForTreeRules.has(group.parent)) {
+            const selectedChildren = group.children.filter(child => selectedForTreeRules.has(child)).length;
             if (selectedChildren < 1) {
                 findings.push({
                     severity: 'error',
@@ -159,8 +163,8 @@ export function analyzeModel(model: Model): AnalysisResult {
     }
 
     for (const group of treeContext.alternativeGroups) {
-        if (selectedSet.has(group.parent)) {
-            const selectedChildren = group.children.filter(child => selectedSet.has(child)).length;
+        if (selectedForTreeRules.has(group.parent)) {
+            const selectedChildren = group.children.filter(child => selectedForTreeRules.has(child)).length;
             if (selectedChildren !== 1) {
                 findings.push({
                     severity: 'error',
@@ -239,7 +243,7 @@ export function analyzeModel(model: Model): AnalysisResult {
     };
 }
 
-function collectTreeAnalysis(root: FeatureNode): TreeAnalysisContext {
+function collectTreeAnalysis(tree: FeatureTree): TreeAnalysisContext {
     const context: TreeAnalysisContext = {
         nodesByFeature: new Map<string, FeatureNode[]>(),
         parentByChild: new Map<string, Set<string>>(),
@@ -247,6 +251,9 @@ function collectTreeAnalysis(root: FeatureNode): TreeAnalysisContext {
         orGroups: [],
         alternativeGroups: []
     };
+
+    // Root is an implicit tree label and may not be declared as a quality attribute.
+    context.nodesByFeature.set(tree.root, []);
 
     const visitNode = (node: FeatureNode): void => {
         const nodeFeature = node.feature.ref?.name;
@@ -312,7 +319,59 @@ function collectTreeAnalysis(root: FeatureNode): TreeAnalysisContext {
         }
     };
 
-    visitNode(root);
+    for (const relation of tree.relations) {
+        if (isMandatoryRelation(relation) || isOrRelation(relation) || isAlternativeRelation(relation)) {
+            const children = isMandatoryRelation(relation)
+                ? [relation.child]
+                : relation.children;
+            const childFeatures = children
+                .map(child => child.feature.ref?.name)
+                .filter((name): name is string => Boolean(name));
+
+            for (const child of children) {
+                const childFeature = child.feature.ref?.name;
+                if (!childFeature) {
+                    continue;
+                }
+                const parents = context.parentByChild.get(childFeature) ?? new Set<string>();
+                parents.add(tree.root);
+                context.parentByChild.set(childFeature, parents);
+                visitNode(child);
+            }
+
+            if (isMandatoryRelation(relation)) {
+                for (const childFeature of childFeatures) {
+                    context.mandatoryEdges.push({
+                        parent: tree.root,
+                        child: childFeature,
+                        node: relation
+                    });
+                }
+            } else if (isOrRelation(relation)) {
+                context.orGroups.push({
+                    parent: tree.root,
+                    children: childFeatures,
+                    node: relation
+                });
+            } else if (isAlternativeRelation(relation)) {
+                context.alternativeGroups.push({
+                    parent: tree.root,
+                    children: childFeatures,
+                    node: relation
+                });
+            }
+        } else {
+            const childFeature = relation.child.feature.ref?.name;
+            if (!childFeature) {
+                continue;
+            }
+            const parents = context.parentByChild.get(childFeature) ?? new Set<string>();
+            parents.add(tree.root);
+            context.parentByChild.set(childFeature, parents);
+            visitNode(relation.child);
+        }
+    }
+
     return context;
 }
 
@@ -346,14 +405,19 @@ function evaluateTradeOffRelation(
     const leftSelected = selectedSet.has(left);
     const rightSelected = selectedSet.has(right);
     const weight = tradeOffWeight(relation.strength);
+    const leftGroup = priorityGroupByFeature.get(left);
+    const rightGroup = priorityGroupByFeature.get(right);
+    const samePriorityGroup = leftSelected
+        && rightSelected
+        && leftGroup !== undefined
+        && rightGroup !== undefined
+        && leftGroup === rightGroup;
 
     if (relation.relation === 'conflictsWith') {
         if (!leftSelected || !rightSelected) {
             return undefined;
         }
-        const leftGroup = priorityGroupByFeature.get(left);
-        const rightGroup = priorityGroupByFeature.get(right);
-        if (leftGroup !== undefined && rightGroup !== undefined && leftGroup === rightGroup) {
+        if (samePriorityGroup) {
             return {
                 weight,
                 value: -weight,
@@ -371,30 +435,32 @@ function evaluateTradeOffRelation(
     }
 
     if (relation.relation === 'increases') {
-        if (rightSelected) {
+        const value = rightSelected ? weight : -weight;
+        if (samePriorityGroup) {
             return {
                 weight,
-                value: weight
+                value,
+                warningMessage: `Trade-off warning: '${left}' increases '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
             };
         }
         return {
             weight,
-            value: -weight,
-            warningMessage: `Trade-off warning: '${left}' increases '${right}', but '${right}' is not selected.`
+            value
         };
     }
 
     if (relation.relation === 'reduces') {
-        if (rightSelected) {
+        const value = rightSelected ? -weight : weight;
+        if (samePriorityGroup) {
             return {
                 weight,
-                value: -weight,
-                warningMessage: `Trade-off warning: '${left}' reduces '${right}', but both are selected.`
+                value,
+                warningMessage: `Trade-off warning: '${left}' reduces '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
             };
         }
         return {
             weight,
-            value: weight
+            value
         };
     }
 
@@ -402,8 +468,6 @@ function evaluateTradeOffRelation(
         return undefined;
     }
 
-    const leftGroup = priorityGroupByFeature.get(left);
-    const rightGroup = priorityGroupByFeature.get(right);
     if (leftGroup !== undefined && rightGroup !== undefined && leftGroup < rightGroup) {
         return {
             weight,

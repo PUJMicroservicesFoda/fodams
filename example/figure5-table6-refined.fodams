@@ -113,7 +113,7 @@ constraints {
 
 tradeOffs {
     Consistency           moreImportantThan     Availability          ;
-    Latency               conflictsWith     Consistency           ;
+    Latency               reduces           Consistency;
     FineGranularity       conflictsWith     Performance           ;
     FineGranularity       conflictsWith     SingleUnitDeployment  ;
     Consistency           conflictsWith     HighCoupling          ;
@@ -178,7 +178,6 @@ configuration {
         Extensibility,
         Sustainability,
         EnergyConsumption,
-        HighEnergyConsumption,
         Flexibility,
 
         Portability,

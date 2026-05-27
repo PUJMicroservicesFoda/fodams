@@ -69,8 +69,8 @@ describe('Parsing tests', () => {
                 expect(parserIssues).toBeUndefined();
 
                 const model = document.parseResult.value;
-                expect(model.tree.root.feature.$refText).toBe('QualityAttributes');
-                expect(model.declarations.map(d => d.name)).toEqual([
+                expect(model.tree.root).toBe('QualityAttributes');
+                expect(model.qualityAttributes.declarations.map(d => d.name)).toEqual([
                         'QualityAttributes',
                         'FunctionalSuitability',
                         'Granularity',

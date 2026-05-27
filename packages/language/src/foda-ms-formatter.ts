@@ -13,6 +13,7 @@ import {
     isOrRelation,
     isPriorityGroup,
     isQualityAttributeDeclaration,
+    isQualityAttributesSection,
     isTradeOffRelation,
     isTradeOffSection
 } from './generated/ast.js';
@@ -21,6 +22,14 @@ export class FodaMsFormatter extends AbstractFormatter {
 
     protected override format(node: AstNode): void {
         if (isModel(node)) {
+            const formatter = this.getNodeFormatter(node);
+            formatter.properties('tree', 'hardConstraints', 'tradeOffs', 'configuration')
+                .prepend(Formatting.noIndent())
+                .prepend(Formatting.newLine());
+            return;
+        }
+
+        if (isQualityAttributesSection(node)) {
             const formatter = this.getNodeFormatter(node);
             formatter.keyword('qualityAttributes').append(Formatting.oneSpace());
 
@@ -31,9 +40,6 @@ export class FodaMsFormatter extends AbstractFormatter {
             formatter.interior(open, close).prepend(Formatting.indent());
 
             formatter.properties('declarations').prepend(Formatting.newLine());
-            formatter.properties('tree', 'hardConstraints', 'tradeOffs', 'configuration')
-                .prepend(Formatting.noIndent())
-                .prepend(Formatting.newLine());
             return;
         }
 
@@ -48,6 +54,12 @@ export class FodaMsFormatter extends AbstractFormatter {
             const formatter = this.getNodeFormatter(node);
             formatter.keyword('featureTree').append(Formatting.oneSpace());
             formatter.property('root').prepend(Formatting.oneSpace());
+            const open = formatter.keyword('{');
+            const close = formatter.keyword('}');
+            open.prepend(Formatting.oneSpace()).append(Formatting.newLine());
+            close.prepend(Formatting.newLine());
+            formatter.interior(open, close).prepend(Formatting.indent());
+            formatter.properties('relations').prepend(Formatting.newLine());
             formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
             return;
         }

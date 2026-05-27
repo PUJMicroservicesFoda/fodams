@@ -1,19 +1,22 @@
 grammar FodaMs
 
 entry Model:
-    'qualityAttributes' '{'
-        declarations+=QualityAttributeDeclaration*
-    '}'
+    qualityAttributes=QualityAttributesSection
     tree=FeatureTree
     hardConstraints=HardConstraintSection
     tradeOffs=TradeOffSection
     configuration=Configuration;
 
+QualityAttributesSection:
+    'qualityAttributes' '{'
+        declarations+=QualityAttributeDeclaration*
+    '}';
+
 QualityAttributeDeclaration:
     'quality' name=ID ';';
 
 FeatureTree:
-    'featureTree' root=FeatureNode ';'?;
+    'featureTree' root=ID '{' relations+=ChildRelation* '}' ';'?;
 
 FeatureNode:
     feature=[QualityAttributeDeclaration:ID]

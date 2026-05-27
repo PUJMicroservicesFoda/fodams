@@ -2,6 +2,7 @@ import { type Module, inject } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
 import { FodaMsGeneratedModule, FodaMsGeneratedSharedModule } from './generated/module.js';
 import { FodaMsFormatter } from './foda-ms-formatter.js';
+import { FodaMsScopeProvider } from './foda-ms-scope.js';
 import { FodaMsValidator, registerValidationChecks } from './foda-ms-validator.js';
 
 /**
@@ -27,6 +28,9 @@ export type FodaMsServices = LangiumServices & FodaMsAddedServices
 export const FodaMsModule: Module<FodaMsServices, PartialLangiumServices & FodaMsAddedServices> = {
     lsp: {
         Formatter: () => new FodaMsFormatter()
+    },
+    references: {
+        ScopeProvider: services => new FodaMsScopeProvider(services)
     },
     validation: {
         FodaMsValidator: () => new FodaMsValidator()
