@@ -1,5 +1,5 @@
 import type { Model } from 'foda-ms-language';
-import { analyzeModel, createFodaMsServices, FodaMsLanguageMetaData } from 'foda-ms-language';
+import { analyzeModel, createFodaMsServices, formatAnalysisFinding, FodaMsLanguageMetaData } from 'foda-ms-language';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { extractAstNode, extractDocument } from './util.js';
@@ -22,6 +22,20 @@ export const analyzeAction = async (fileName: string, opts: GenerateOptions): Pr
 
     console.log(chalk.green(`Analysis report generated successfully: ${generatedFilePath}`));
     console.log(chalk.cyan(`Normalized score: ${analysis.score}/100`));
+
+    if (analysis.findings.length > 0) {
+        console.log(chalk.cyan(`Findings: ${analysis.findings.length}`));
+        for (const finding of analysis.findings) {
+            const text = formatAnalysisFinding(finding);
+            if (finding.severity === 'error') {
+                console.log(chalk.red(`- ${text}`));
+            } else if (finding.severity === 'warning') {
+                console.log(chalk.yellow(`- ${text}`));
+            } else {
+                console.log(chalk.blue(`- ${text}`));
+            }
+        }
+    }
 
     if ((document.diagnostics ?? []).length > 0) {
         console.log(chalk.yellow(`Diagnostics: ${(document.diagnostics ?? []).length}`));

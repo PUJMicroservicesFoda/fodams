@@ -1,5 +1,4 @@
 qualityAttributes {
-    quality QualityAttributes;
     quality Performance;
     quality Scalability;
     quality HighEnergyConsumption;
@@ -21,5 +20,6 @@ tradeOffs {
 }
 
 configuration {
-    priorityGroup { QualityAttributes, Performance, Scalability, HighEnergyConsumption };
+    priorityGroup { Performance, HighEnergyConsumption };
+    priorityGroup { Scalability };
 }

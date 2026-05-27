@@ -12,13 +12,27 @@ import {
 } from './generated/ast.js';
 import type { FodaMsServices } from './foda-ms-module.js';
 
-type FindingSeverity = 'error' | 'warning' | 'info';
+export type FindingSeverity = 'error' | 'warning' | 'info';
+
+const findingSeverityLabels: Record<FindingSeverity, string> = {
+    error: 'Error',
+    warning: 'Warning',
+    info: 'Information'
+};
 
 export interface AnalysisFinding {
     severity: FindingSeverity;
     message: string;
     node: AstNode;
     property?: string;
+}
+
+export function findingSeverityLabel(severity: FindingSeverity): string {
+    return findingSeverityLabels[severity];
+}
+
+export function formatAnalysisFinding(finding: Pick<AnalysisFinding, 'severity' | 'message'>): string {
+    return `[${findingSeverityLabel(finding.severity)}] ${finding.message}`;
 }
 
 export interface AnalysisResult {
@@ -421,7 +435,7 @@ function evaluateTradeOffRelation(
             return {
                 weight,
                 value: -weight,
-                warningMessage: `Trade-off warning: '${left}' conflicts with '${right}', but both are in the same priority group.`
+                warningMessage: `Trade-off warning: '${left}' conflicts with '${right}', but both are in the same priority group. Consider putting them in different priority groups or selecting only one of them.`
             };
         }
         return {

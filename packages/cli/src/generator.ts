@@ -1,4 +1,4 @@
-import { analyzeModel, type Model } from 'foda-ms-language';
+import { analyzeModel, formatAnalysisFinding, type Model } from 'foda-ms-language';
 import { expandToNode, joinToNode, toString } from 'langium/generate';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -28,7 +28,7 @@ export function generateAnalysisReport(model: Model, filePath: string, destinati
         Findings:
         ${result.findings.length === 0
             ? 'No findings.'
-            : joinToNode(result.findings, finding => `- [${finding.severity.toUpperCase()}] ${finding.message}`, { appendNewLineIfNotEmpty: true })}
+            : joinToNode(result.findings, finding => `- ${formatAnalysisFinding(finding)}`, { appendNewLineIfNotEmpty: true })}
     `.appendNewLineIfNotEmpty();
 
     if (!fs.existsSync(data.destination)) {

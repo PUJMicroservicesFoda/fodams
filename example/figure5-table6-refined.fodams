@@ -1,5 +1,4 @@
 qualityAttributes {
-    quality QualityAttributes;
     quality FunctionalSuitability;
     quality Consistency;
     quality Granularity;
@@ -21,8 +20,6 @@ qualityAttributes {
 
     quality Compatibility;
     quality Coupling;
-    quality LowCoupling;
-    quality HighCoupling;
     quality Interoperability;
 
     quality Reliability;
@@ -41,8 +38,6 @@ qualityAttributes {
     quality Extensibility;
     quality Sustainability;
     quality EnergyConsumption;
-    quality HighEnergyConsumption;
-    quality LowEnergyConsumption;
     quality Flexibility;
 
     quality Portability;
@@ -52,9 +47,7 @@ qualityAttributes {
 featureTree QualityAttributes {
     mandatory FunctionalSuitability {
         optional Consistency;
-        mandatory Granularity {
-            alternative { CoarseGranularity, FineGranularity };
-        };
+        mandatory Granularity;
     };
 
     optional Security {
@@ -73,9 +66,7 @@ featureTree QualityAttributes {
     };
 
     optional Compatibility {
-        optional Coupling {
-            alternative { LowCoupling, HighCoupling };
-        };
+        optional Coupling;
         optional Interoperability;
     };
 
@@ -95,9 +86,7 @@ featureTree QualityAttributes {
         };
         optional Extensibility;
         optional Sustainability {
-            optional EnergyConsumption {
-                alternative { HighEnergyConsumption, LowEnergyConsumption };
-            };
+            optional EnergyConsumption;
         };
         optional Flexibility;
     };
@@ -112,47 +101,42 @@ constraints {
 }
 
 tradeOffs {
-    Consistency           moreImportantThan     Availability          ;
+    Consistency           reduces           Availability;
     Latency               reduces           Consistency;
-    FineGranularity       conflictsWith     Performance           ;
-    FineGranularity       conflictsWith     SingleUnitDeployment  ;
-    Consistency           conflictsWith     HighCoupling          ;
-    HighCoupling          conflictsWith     Performance           ;
-    Security              reduces           Performance           ;
-    Security              reduces           Scalability           ;
-    Security              increases         Complexity            ;
-    // SingleUnitDeployment  increases         HighCoupling          ;
-    SingleUnitDeployment  conflictsWith     Scalability           ;
-    Availability          increases         EnergyConsumption ;
-    Scalability           increases         EnergyConsumption ;
-    Performance           increases         EnergyConsumption ;
-    Reliability           increases         EnergyConsumption ;
-    Availability          increases         EnergyConsumption  ;
-    Elasticity            increases         EnergyConsumption  ;
-    Availability          increases         Complexity            ;
-    Availability          conflictsWith     Maintainability       ;
-    Availability          conflictsWith     Scalability           ;
-    Performance           increases         Complexity            ;
-    Security              increases         Coupling           ;
-    Reliability           increases         Coupling     ;
+    Granularity           reduces           Performance;
+    SingleUnitDeployment  reduces           Granularity;
+    Consistency           conflictsWith     Coupling;   // Revisar
+    Coupling              conflictsWith     Performance; // Revisar
+    Security              reduces           Performance;
+    Security              reduces           Scalability;
+    Security              increases         Complexity;
+    SingleUnitDeployment  increases         Coupling; // Revisar
+    SingleUnitDeployment  reduces           Scalability;
+    Availability          increases         EnergyConsumption;
+    Scalability           increases         EnergyConsumption;
+    Performance           increases         EnergyConsumption;
+    Reliability           increases         EnergyConsumption;
+    Availability          increases         EnergyConsumption;
+    Elasticity            increases         EnergyConsumption;
+    Availability          increases         Complexity;
+    Availability          conflictsWith     Maintainability; // Revisar
+    Availability          increases         Scalability;
+    Performance           increases         Complexity;
+    Security              increases         Coupling;
+    Reliability           increases         Coupling;
 }
 
 configuration {
     priorityGroup {
-        QualityAttributes,
-
         FunctionalSuitability,
         Consistency,
-        Granularity,
-        CoarseGranularity,
 
-        Security,
         Confidentiality,
         Integrity,
         Authenticity,
 
         Performance,
-        Latency,
+
         Throughput,
         ResourceUtilization,
         Elasticity,
@@ -160,8 +144,6 @@ configuration {
         ExecutionCost,
 
         Compatibility,
-        Coupling,
-        LowCoupling,
         Interoperability,
 
         Reliability,
@@ -170,14 +152,11 @@ configuration {
         Resiliency,
 
         Maintainability,
-        Complexity,
         Reusability,
         Testability,
         Deployment,
-        MultipleUnitDeployment,
         Extensibility,
         Sustainability,
-        EnergyConsumption,
         Flexibility,
 
         Portability,
@@ -185,7 +164,19 @@ configuration {
     };
 
     priorityGroup {
+        SingleUnitDeployment,
+        Security,
+        Latency,
         Availability
 
-    }
+    };
+
+    priorityGroup {
+        Granularity,
+        Coupling,
+        Complexity,
+        EnergyConsumption
+
+    };
+
 }

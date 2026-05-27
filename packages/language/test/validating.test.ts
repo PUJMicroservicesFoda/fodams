@@ -4,7 +4,7 @@ import { expandToString as s } from "langium/generate";
 import { parseHelper } from "langium/test";
 import type { Diagnostic } from "vscode-languageserver-types";
 import type { Model } from "foda-ms-language";
-import { analyzeModel, createFodaMsServices, isModel } from "foda-ms-language";
+import { analyzeModel, createFodaMsServices, findingSeverityLabel, formatAnalysisFinding, isModel } from "foda-ms-language";
 
 let services: ReturnType<typeof createFodaMsServices>;
 let parse:    ReturnType<typeof parseHelper<Model>>;
@@ -123,7 +123,7 @@ describe('Validating', () => {
         `);
 
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
-        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' conflicts with 'Scalability', but both are in the same priority group."));
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' conflicts with 'Scalability', but both are in the same priority group. Consider putting them in different priority groups or selecting only one of them."));
         expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Scalability' increases 'HighEnergyConsumption', but both are in the same priority group. Consider putting them in different priority groups."));
         expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' reduces 'Scalability', but both are in the same priority group. Consider putting them in different priority groups."));
 
@@ -160,6 +160,17 @@ describe('Validating', () => {
 
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Security' must be in a higher-priority group than 'Performance'."));
+    });
+
+    test('format findings with VS Code severity labels', () => {
+        expect(findingSeverityLabel('error')).toBe('Error');
+        expect(findingSeverityLabel('warning')).toBe('Warning');
+        expect(findingSeverityLabel('info')).toBe('Information');
+
+        expect(formatAnalysisFinding({
+            severity: 'warning',
+            message: "Trade-off warning: 'Performance' reduces 'Scalability'."
+        })).toBe("[Warning] Trade-off warning: 'Performance' reduces 'Scalability'.");
     });
 });
 
