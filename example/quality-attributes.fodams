@@ -163,7 +163,7 @@ configuration {
     };
 
     priorityGroup {
-        SingleUnitDeployment,
+        // SingleUnitDeployment,
         Scalability,
         Performance,
         Latency,
@@ -178,5 +178,6 @@ configuration {
         EnergyConsumption
 
     };
+
 
 }
