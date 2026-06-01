@@ -292,22 +292,35 @@ function evaluateTradeOffRelation(
     const weight = tradeOffWeight(relation.strength);
     const leftGroup = priorityGroupByFeature.get(left);
     const rightGroup = priorityGroupByFeature.get(right);
+    const samePriorityGroup = leftSelected
+        && rightSelected
+        && leftGroup !== undefined
+        && rightGroup !== undefined
+        && leftGroup === rightGroup;
 
     if (!leftSelected) {
         return undefined;
     }
 
     if (relation.relation === 'increases') {
+        const warningMessage = samePriorityGroup
+            ? `Trade-off warning: '${left}' increases '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
+            : undefined;
         return {
             weight,
-            value: rightSelected ? weight : -weight
+            value: rightSelected ? weight : -weight,
+            warningMessage
         };
     }
 
     if (relation.relation === 'reduces') {
+        const warningMessage = samePriorityGroup
+            ? `Trade-off warning: '${left}' reduces '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
+            : undefined;
         return {
             weight,
-            value: rightSelected ? -weight : weight
+            value: rightSelected ? -weight : weight,
+            warningMessage
         };
     }
 

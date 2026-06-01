@@ -155,15 +155,15 @@ configuration {
 
         Portability,
         Security,
-        Adaptability
+        Adaptability,
+        Availability
     };
 
     priorityGroup {
         SingleUnitDeployment,
         Scalability,
         Performance,
-        Latency,
-        Availability
+        Latency
 
     };
 

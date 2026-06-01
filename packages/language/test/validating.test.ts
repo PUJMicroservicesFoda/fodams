@@ -169,6 +169,35 @@ describe('Validating', () => {
         expect(analysis.totalCombinations).toBe(9);
     });
 
+    test('warn when reduces pair is in same priority group', async () => {
+        document = await parse(`
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Consistency;
+                quality Availability;
+            }
+
+            featureTree QualityAttributes {
+                optional Consistency;
+                optional Availability;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Consistency reduces Availability;
+            }
+
+            configuration {
+                priorityGroup { QualityAttributes, Consistency, Availability };
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Consistency' reduces 'Availability', but both are in the same priority group. Consider putting them in different priority groups."));
+    });
+
     test('format findings with VS Code severity labels', () => {
         expect(findingSeverityLabel('error')).toBe('Error');
         expect(findingSeverityLabel('warning')).toBe('Warning');
