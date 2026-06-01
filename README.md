@@ -15,3 +15,8 @@ Some file are contained in the root directory as well.
 - [tsconfig.json](./tsconfig.json) - The base TypeScript compiler configuration
 - [tsconfig.build.json](./package.json) - Configuration used to build the complete source code.
 - [.gitignore](.gitignore) - Files ignored by git
+
+# Scripts
+
+- `rebuild.sh` Cleans and recompile everything. Required whenever there are changes in the code
+- `analyze.sh <fodams file>`. Creates a report for the given files. This includes max num of configurations and warnings or errors in the file.
