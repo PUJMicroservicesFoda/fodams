@@ -40,7 +40,13 @@ export interface AnalysisResult {
     rawScore: number;
     activeTradeOffs: number;
     maxValidConfigurations: number;
+    totalCombinations: number;
     findings: AnalysisFinding[];
+}
+
+interface MonteCarloEstimate {
+    estimate: number;
+    totalSpace: number;
 }
 
 interface GroupConstraint {
@@ -109,13 +115,15 @@ export function analyzeModel(model: Model): AnalysisResult {
     findings.push(...configurationResult.findings);
 
     const score = normalizeScore(configurationResult.rawScore, configurationResult.minScore, configurationResult.maxScore);
-    const maxValidConfigurations = countValidConfigurations(model, treeContext);
+    const estimation = estimateValidConfigurations(model, treeContext);
+    const maxValidConfigurations = Math.round(estimation.estimate);
 
     return {
         score,
         rawScore: configurationResult.rawScore,
         activeTradeOffs: configurationResult.activeTradeOffs,
         maxValidConfigurations,
+        totalCombinations: estimation.totalSpace,
         findings
     };
 }
@@ -583,53 +591,109 @@ function evaluateConfiguration(
     };
 }
 
-function countValidConfigurations(model: Model, treeContext: TreeAnalysisContext): number {
+function estimateValidConfigurations(model: Model, treeContext: TreeAnalysisContext): MonteCarloEstimate {
+    const declarations = model.qualityAttributes.declarations;
+    const nElements = declarations.length;
+    const mBuckets = model.configuration.priorityGroups.length + 1;
+    const totalSpace = Math.pow(mBuckets, nElements);
+
     if (collectStaticFindings(model, treeContext).some(finding => finding.severity !== 'info')) {
-        return 0;
-    }
-
-    const featureNames = model.qualityAttributes.declarations.map(declaration => declaration.name);
-    let validConfigurations = 0;
-
-    for (let groupCount = 0; groupCount <= featureNames.length; groupCount += 1) {
-        const groups: string[][] = Array.from({ length: groupCount }, () => []);
-
-        const visit = (featureIndex: number): void => {
-            if (featureIndex >= featureNames.length) {
-                if (groupCount > 0 && groups.some(group => group.length === 0)) {
-                    return;
-                }
-
-                const selectedSet = new Set<string>();
-                const priorityGroupByFeature = new Map<string, number>();
-
-                for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
-                    for (const featureName of groups[groupIndex]) {
-                        selectedSet.add(featureName);
-                        priorityGroupByFeature.set(featureName, groupIndex);
-                    }
-                }
-
-                const analysis = evaluateConfiguration(model, treeContext, selectedSet, priorityGroupByFeature);
-                if (!analysis.findings.some(finding => finding.severity !== 'info')) {
-                    validConfigurations += 1;
-                }
-                return;
-            }
-
-            visit(featureIndex + 1);
-
-            for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
-                groups[groupIndex].push(featureNames[featureIndex]);
-                visit(featureIndex + 1);
-                groups[groupIndex].pop();
-            }
+        return {
+            estimate: 0,
+            totalSpace
         };
-
-        visit(0);
     }
 
-    return validConfigurations;
+    const featureIndexByName = new Map<string, number>();
+    declarations.forEach((declaration, index) => {
+        featureIndexByName.set(declaration.name, index);
+    });
+
+    const forbiddenPairSet = new Set<string>();
+    for (const relation of model.tradeOffs.relations) {
+        if (relation.relation !== 'increases' && relation.relation !== 'reduces') {
+            continue;
+        }
+
+        const leftName = relation.left.ref?.name;
+        const rightName = relation.right.ref?.name;
+        if (!leftName || !rightName) {
+            continue;
+        }
+
+        const leftIndex = featureIndexByName.get(leftName);
+        const rightIndex = featureIndexByName.get(rightName);
+        if (leftIndex === undefined || rightIndex === undefined || leftIndex === rightIndex) {
+            continue;
+        }
+
+        const a = Math.min(leftIndex, rightIndex);
+        const b = Math.max(leftIndex, rightIndex);
+        forbiddenPairSet.add(`${a},${b}`);
+    }
+
+    const rng = mulberry32(42);
+    const freeBucket = mBuckets - 1;
+    const assignment = new Array<number>(nElements);
+
+    const minSamples = 1_000;
+    const maxSamples = 1_000_000;
+    const targetRelativeError = 0.05;
+
+    let valid = 0;
+    let samples = 0;
+
+    while (samples < maxSamples) {
+        for (let index = 0; index < nElements; index += 1) {
+            assignment[index] = Math.floor(rng() * mBuckets);
+        }
+
+        if (isAssignmentValid(assignment, forbiddenPairSet, freeBucket)) {
+            valid += 1;
+        }
+
+        samples += 1;
+        if (samples >= minSamples) {
+            const fraction = valid / samples;
+            const estimate = fraction * totalSpace;
+            if (estimate > 0) {
+                const varianceFraction = samples > 1
+                    ? (fraction * (1 - fraction)) / (samples - 1)
+                    : fraction * (1 - fraction);
+                const stderr = Math.sqrt(varianceFraction) * totalSpace;
+                const relativeError = stderr / estimate;
+                if (relativeError <= targetRelativeError) {
+                    break;
+                }
+            }
+        }
+    }
+
+    return {
+        estimate: (valid / samples) * totalSpace,
+        totalSpace
+    };
+}
+
+function isAssignmentValid(assignment: number[], forbiddenPairSet: Set<string>, freeBucket: number): boolean {
+    for (const pair of forbiddenPairSet) {
+        const [a, b] = pair.split(',').map(Number);
+        if (assignment[a] === assignment[b] && assignment[a] !== freeBucket) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function mulberry32(seed: number): () => number {
+    let s = seed >>> 0;
+    return () => {
+        s += 0x6d2b79f5;
+        let t = s;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 0xffffffff;
+    };
 }
 
 function normalizeScore(rawScore: number, minScore: number, maxScore: number): number {

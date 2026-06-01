@@ -18,10 +18,11 @@ export function generateAnalysisReport(model: Model, filePath: string, destinati
         FODA-MS Feature-Oriented Model Analysis
         =======================================
 
-        NormalizedScore: ${result.score}/100
-        ActiveTradeOffs: ${result.activeTradeOffs}
-        RawTradeOffScore: ${result.rawScore}
-        MaxValidConfigurations: ${result.maxValidConfigurations}
+        Normalized Score: ${result.score}/100
+        Active Trade Offs: ${result.activeTradeOffs}
+        Raw TradeOff Score: ${result.rawScore}
+        Approx. Max Valid Configurations: ${result.maxValidConfigurations}
+        Total Combinations: ${result.totalCombinations}
 
         SelectedFeatures:
         ${joinToNode(selectedFeatures, feature => `- ${feature}`, { appendNewLineIfNotEmpty: true })}

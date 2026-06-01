@@ -165,7 +165,8 @@ describe('Validating', () => {
         expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' must be in a higher-priority group than 'QualityAttributes'."));
 
         const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.maxValidConfigurations).toBe(4);
+        expect(analysis.maxValidConfigurations).toBe(9);
+        expect(analysis.totalCombinations).toBe(9);
     });
 
     test('format findings with VS Code severity labels', () => {
@@ -203,7 +204,8 @@ describe('Validating', () => {
         `);
 
         const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.maxValidConfigurations).toBe(6);
+        expect(analysis.maxValidConfigurations).toBe(9);
+        expect(analysis.totalCombinations).toBe(9);
     });
 });
 

@@ -102,17 +102,13 @@ constraints {
 
 tradeOffs {
     Consistency           reduces           Availability;
-    Consistency          increases          Availability;
     Latency               reduces           Consistency;
-    // Consistency           increases         Latency;
+    Consistency           increases         Latency;
     Granularity           reduces           Performance;
     SingleUnitDeployment  reduces           Granularity;
-    // Consistency           conflictsWith     Coupling;   // Revisar
-    // Coupling              conflictsWith     Performance; // Revisar
     Security              reduces           Performance;
     Security              reduces           Scalability;
     Security              increases         Complexity;
-    SingleUnitDeployment  increases         Coupling; // Revisar
     SingleUnitDeployment  reduces           Scalability;
     Availability          increases         EnergyConsumption;
     Scalability           increases         EnergyConsumption;
@@ -121,7 +117,6 @@ tradeOffs {
     Availability          increases         EnergyConsumption;
     Elasticity            increases         EnergyConsumption;
     Availability          increases         Complexity;
-    // Availability          conflictsWith     Maintainability; // Revisar
     Availability          increases         Scalability;
     Performance           increases         Complexity;
     Security              increases         Coupling;
@@ -164,7 +159,7 @@ configuration {
     };
 
     priorityGroup {
-        // SingleUnitDeployment,
+        SingleUnitDeployment,
         Scalability,
         Performance,
         Latency,
