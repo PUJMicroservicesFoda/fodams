@@ -58,7 +58,7 @@ constraints {
 }
 
 tradeOffs {
-    Performance conflictsWith HighEnergyConsumption strength strong;
+    Performance increases HighEnergyConsumption strength strong;
     Performance increases Throughput;
     Reusability moreImportantThan Testability strength medium;
     Security increases Integrity;

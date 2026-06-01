@@ -49,8 +49,8 @@ describe('Parsing tests', () => {
             }
 
             tradeOffs {
-                Performance conflictsWith FineGranularity strength strong;
                 Performance increases Throughput strength weak;
+                FineGranularity reduces Performance strength strong;
                 Throughput reduces Latency strength medium;
                 Performance moreImportantThan Latency strength medium;
             }
@@ -93,8 +93,8 @@ describe('Parsing tests', () => {
                         'FineGranularity excludes Performance'
                 ]);
                 expect(model.tradeOffs.relations.map(r => `${r.left.$refText} ${r.relation} ${r.right.$refText} (${r.strength ?? 'medium'})`)).toEqual([
-                        'Performance conflictsWith FineGranularity (strong)',
                     'Performance increases Throughput (weak)',
+                    'FineGranularity reduces Performance (strong)',
                     'Throughput reduces Latency (medium)',
                     'Performance moreImportantThan Latency (medium)'
                 ]);

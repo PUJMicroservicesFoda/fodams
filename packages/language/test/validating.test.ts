@@ -93,55 +93,58 @@ describe('Validating', () => {
         expect(output).toEqual(expect.stringContaining("Hard constraint violated: 'Security' requires 'Availability'."));
     });
 
-    test('check trade-off warnings and normalized score', async () => {
+    test('check direct and transitive trade-off contradictions', async () => {
         document = await parse(`
             qualityAttributes {
                 quality QualityAttributes;
                 quality Performance;
                 quality Scalability;
-                quality HighEnergyConsumption;
+                quality Reliability;
+                quality Maintainability;
             }
 
             featureTree QualityAttributes {
                 optional Performance;
                 optional Scalability;
-                optional HighEnergyConsumption;
+                optional Reliability;
+                optional Maintainability;
             };
 
             constraints {
             }
 
             tradeOffs {
-                Performance conflictsWith Scalability;
-                Scalability increases HighEnergyConsumption;
+                Performance increases Reliability;
+                Performance reduces Reliability;
+                Reliability increases Scalability;
+                Performance reduces Maintainability;
+                Maintainability increases Scalability;
                 Performance reduces Scalability;
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Performance, Scalability, HighEnergyConsumption };
+                priorityGroup { QualityAttributes, Performance, Reliability };
+                priorityGroup { Scalability };
             }
         `);
 
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
-        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' conflicts with 'Scalability', but both are in the same priority group. Consider putting them in different priority groups or selecting only one of them."));
-        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Scalability' increases 'HighEnergyConsumption', but both are in the same priority group. Consider putting them in different priority groups."));
-        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' reduces 'Scalability', but both are in the same priority group. Consider putting them in different priority groups."));
+        expect(output).toEqual(expect.stringContaining("Trade-off contradiction: 'Performance' increases 'Reliability' and 'Performance' reduces 'Reliability'."));
+        expect(output).toEqual(expect.stringContaining("Trade-off contradiction: 'Performance' increases 'Scalability' and 'Performance' reduces 'Scalability'."));
 
         const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.activeTradeOffs).toBe(3);
-        expect(analysis.score).toBe(33);
+        expect(analysis.activeTradeOffs).toBe(5);
+        expect(analysis.maxValidConfigurations).toBe(0);
     });
 
     test('check moreImportantThan priority ordering', async () => {
         document = await parse(`
             qualityAttributes {
                 quality QualityAttributes;
-                quality Security;
                 quality Performance;
             }
 
             featureTree QualityAttributes {
-                optional Security;
                 optional Performance;
             };
 
@@ -149,17 +152,20 @@ describe('Validating', () => {
             }
 
             tradeOffs {
-                Security moreImportantThan Performance strength strong;
+                Performance moreImportantThan QualityAttributes strength strong;
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Performance };
-                priorityGroup { Security };
+                priorityGroup { QualityAttributes };
+                priorityGroup { Performance };
             }
         `);
 
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
-        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Security' must be in a higher-priority group than 'Performance'."));
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' must be in a higher-priority group than 'QualityAttributes'."));
+
+        const analysis = analyzeModel(document!.parseResult.value);
+        expect(analysis.maxValidConfigurations).toBe(4);
     });
 
     test('format findings with VS Code severity labels', () => {
@@ -171,6 +177,33 @@ describe('Validating', () => {
             severity: 'warning',
             message: "Trade-off warning: 'Performance' reduces 'Scalability'."
         })).toBe("[Warning] Trade-off warning: 'Performance' reduces 'Scalability'.");
+    });
+
+    test('count valid configurations with empty groups disallowed', async () => {
+        document = await parse(`
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance;
+            }
+
+            featureTree QualityAttributes {
+                optional Performance;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+            }
+
+            configuration {
+                priorityGroup { QualityAttributes };
+                priorityGroup { Performance };
+            }
+        `);
+
+        const analysis = analyzeModel(document!.parseResult.value);
+        expect(analysis.maxValidConfigurations).toBe(6);
     });
 });
 

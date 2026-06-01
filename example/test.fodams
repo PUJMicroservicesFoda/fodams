@@ -14,7 +14,7 @@ constraints {
 }
 
 tradeOffs {
-    Performance conflictsWith Scalability;
+    Performance increases Scalability;
     Scalability increases HighEnergyConsumption;
     Performance reduces Scalability;
 }

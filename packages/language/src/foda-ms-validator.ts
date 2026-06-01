@@ -39,6 +39,7 @@ export interface AnalysisResult {
     score: number;
     rawScore: number;
     activeTradeOffs: number;
+    maxValidConfigurations: number;
     findings: AnalysisFinding[];
 }
 
@@ -56,6 +57,14 @@ interface TreeAnalysisContext {
     alternativeGroups: GroupConstraint[];
 }
 
+interface ConfigurationAnalysisResult {
+    findings: AnalysisFinding[];
+    rawScore: number;
+    minScore: number;
+    maxScore: number;
+    activeTradeOffs: number;
+}
+
 /**
  * Register custom validation checks.
  */
@@ -71,36 +80,8 @@ export function registerValidationChecks(services: FodaMsServices) {
 export function analyzeModel(model: Model): AnalysisResult {
     const findings: AnalysisFinding[] = [];
 
-    const declarations = model.qualityAttributes.declarations;
-    const declaredNames = new Set<string>();
-    const duplicateDeclarations = new Set<string>();
-
-    for (const declaration of declarations) {
-        if (declaredNames.has(declaration.name)) {
-            duplicateDeclarations.add(declaration.name);
-            findings.push({
-                severity: 'error',
-                message: `Quality attribute '${declaration.name}' is declared more than once.`,
-                node: declaration,
-                property: 'name'
-            });
-        }
-        declaredNames.add(declaration.name);
-    }
-
     const treeContext = collectTreeAnalysis(model.tree);
-    for (const [featureName, nodes] of treeContext.nodesByFeature.entries()) {
-        if (nodes.length > 1) {
-            for (const repeatedNode of nodes.slice(1)) {
-                findings.push({
-                    severity: 'error',
-                    message: `Feature '${featureName}' appears multiple times in the feature tree.`,
-                    node: repeatedNode,
-                    property: 'feature'
-                });
-            }
-        }
-    }
+    findings.push(...collectStaticFindings(model, treeContext));
 
     const selectedSet = new Set<string>();
     const priorityGroupByFeature = new Map<string, number>();
@@ -124,135 +105,17 @@ export function analyzeModel(model: Model): AnalysisResult {
         }
     }
 
-    for (const selectedName of selectedSet) {
-        if (!treeContext.nodesByFeature.has(selectedName)) {
-            findings.push({
-                severity: 'error',
-                message: `Selected feature '${selectedName}' is not present in the feature tree.`,
-                node: model.configuration,
-                property: 'priorityGroups'
-            });
-        }
-    }
+    const configurationResult = evaluateConfiguration(model, treeContext, selectedSet, priorityGroupByFeature);
+    findings.push(...configurationResult.findings);
 
-    const selectedForTreeRules = new Set(selectedSet);
-    selectedForTreeRules.add(model.tree.root);
-
-    for (const [child, parents] of treeContext.parentByChild.entries()) {
-        if (selectedSet.has(child)) {
-            const hasSelectedParent = [...parents].some(parent => selectedForTreeRules.has(parent));
-            if (!hasSelectedParent) {
-                findings.push({
-                    severity: 'error',
-                    message: `Feature '${child}' is selected but none of its parents are selected.`,
-                    node: treeContext.nodesByFeature.get(child)?.[0] ?? model.tree,
-                    property: 'feature'
-                });
-            }
-        }
-    }
-
-    for (const edge of treeContext.mandatoryEdges) {
-        if (selectedForTreeRules.has(edge.parent) && !selectedForTreeRules.has(edge.child)) {
-            findings.push({
-                severity: 'error',
-                message: `Feature '${edge.child}' is mandatory when '${edge.parent}' is selected.`,
-                node: edge.node,
-                property: 'child'
-            });
-        }
-    }
-
-    for (const group of treeContext.orGroups) {
-        if (selectedForTreeRules.has(group.parent)) {
-            const selectedChildren = group.children.filter(child => selectedForTreeRules.has(child)).length;
-            if (selectedChildren < 1) {
-                findings.push({
-                    severity: 'error',
-                    message: `Or-group under '${group.parent}' requires at least one selected child.`,
-                    node: group.node
-                });
-            }
-        }
-    }
-
-    for (const group of treeContext.alternativeGroups) {
-        if (selectedForTreeRules.has(group.parent)) {
-            const selectedChildren = group.children.filter(child => selectedForTreeRules.has(child)).length;
-            if (selectedChildren !== 1) {
-                findings.push({
-                    severity: 'error',
-                    message: `Alternative group under '${group.parent}' requires exactly one selected child.`,
-                    node: group.node
-                });
-            }
-        }
-    }
-
-    for (const constraint of model.hardConstraints.constraints) {
-        const left = constraint.left.ref?.name;
-        const right = constraint.right.ref?.name;
-        if (!left || !right) {
-            continue;
-        }
-        if (constraint.relation === 'requires' && selectedSet.has(left) && !selectedSet.has(right)) {
-            findings.push({
-                severity: 'error',
-                message: `Hard constraint violated: '${left}' requires '${right}'.`,
-                node: constraint,
-                property: 'right'
-            });
-        }
-        if (constraint.relation === 'excludes' && selectedSet.has(left) && selectedSet.has(right)) {
-            findings.push({
-                severity: 'error',
-                message: `Hard constraint violated: '${left}' excludes '${right}'.`,
-                node: constraint,
-                property: 'right'
-            });
-        }
-    }
-
-    let minScore = 0;
-    let maxScore = 0;
-    let rawScore = 0;
-    let activeTradeOffs = 0;
-
-    for (const relation of model.tradeOffs.relations) {
-        const evaluated = evaluateTradeOffRelation(relation, selectedSet, priorityGroupByFeature);
-        if (!evaluated) {
-            continue;
-        }
-
-        activeTradeOffs += 1;
-        minScore -= evaluated.weight;
-        maxScore += evaluated.weight;
-        rawScore += evaluated.value;
-
-        if (evaluated.warningMessage) {
-            findings.push({
-                severity: 'warning',
-                message: evaluated.warningMessage,
-                node: relation
-            });
-        }
-    }
-
-    const score = normalizeScore(rawScore, minScore, maxScore);
-
-    // Keep declaration consistency strict even if references already trigger linker errors.
-    if (duplicateDeclarations.size > 0) {
-        findings.push({
-            severity: 'info',
-            message: 'Duplicate quality-attribute declarations can distort trade-off analysis.',
-            node: model
-        });
-    }
+    const score = normalizeScore(configurationResult.rawScore, configurationResult.minScore, configurationResult.maxScore);
+    const maxValidConfigurations = countValidConfigurations(model, treeContext);
 
     return {
         score,
-        rawScore,
-        activeTradeOffs,
+        rawScore: configurationResult.rawScore,
+        activeTradeOffs: configurationResult.activeTradeOffs,
+        maxValidConfigurations,
         findings
     };
 }
@@ -421,60 +284,22 @@ function evaluateTradeOffRelation(
     const weight = tradeOffWeight(relation.strength);
     const leftGroup = priorityGroupByFeature.get(left);
     const rightGroup = priorityGroupByFeature.get(right);
-    const samePriorityGroup = leftSelected
-        && rightSelected
-        && leftGroup !== undefined
-        && rightGroup !== undefined
-        && leftGroup === rightGroup;
-
-    if (relation.relation === 'conflictsWith') {
-        if (!leftSelected || !rightSelected) {
-            return undefined;
-        }
-        if (samePriorityGroup) {
-            return {
-                weight,
-                value: -weight,
-                warningMessage: `Trade-off warning: '${left}' conflicts with '${right}', but both are in the same priority group. Consider putting them in different priority groups or selecting only one of them.`
-            };
-        }
-        return {
-            weight,
-            value: weight
-        };
-    }
 
     if (!leftSelected) {
         return undefined;
     }
 
     if (relation.relation === 'increases') {
-        const value = rightSelected ? weight : -weight;
-        if (samePriorityGroup) {
-            return {
-                weight,
-                value,
-                warningMessage: `Trade-off warning: '${left}' increases '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
-            };
-        }
         return {
             weight,
-            value
+            value: rightSelected ? weight : -weight
         };
     }
 
     if (relation.relation === 'reduces') {
-        const value = rightSelected ? -weight : weight;
-        if (samePriorityGroup) {
-            return {
-                weight,
-                value,
-                warningMessage: `Trade-off warning: '${left}' reduces '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
-            };
-        }
         return {
             weight,
-            value
+            value: rightSelected ? -weight : weight
         };
     }
 
@@ -493,6 +318,318 @@ function evaluateTradeOffRelation(
         value: -weight,
         warningMessage: `Trade-off warning: '${left}' must be in a higher-priority group than '${right}'.`
     };
+}
+
+function collectStaticFindings(model: Model, treeContext: TreeAnalysisContext): AnalysisFinding[] {
+    const findings: AnalysisFinding[] = [];
+    const declarations = model.qualityAttributes.declarations;
+    const declaredNames = new Set<string>();
+    let duplicateDeclarations = false;
+
+    for (const declaration of declarations) {
+        if (declaredNames.has(declaration.name)) {
+            duplicateDeclarations = true;
+            findings.push({
+                severity: 'error',
+                message: `Quality attribute '${declaration.name}' is declared more than once.`,
+                node: declaration,
+                property: 'name'
+            });
+        }
+        declaredNames.add(declaration.name);
+    }
+
+    for (const [featureName, nodes] of treeContext.nodesByFeature.entries()) {
+        if (nodes.length > 1) {
+            for (const repeatedNode of nodes.slice(1)) {
+                findings.push({
+                    severity: 'error',
+                    message: `Feature '${featureName}' appears multiple times in the feature tree.`,
+                    node: repeatedNode,
+                    property: 'feature'
+                });
+            }
+        }
+    }
+
+    findings.push(...collectTradeOffContradictions(model, declaredNames));
+
+    if (duplicateDeclarations) {
+        findings.push({
+            severity: 'info',
+            message: 'Duplicate quality-attribute declarations can distort trade-off analysis.',
+            node: model
+        });
+    }
+
+    return findings;
+}
+
+function collectTradeOffContradictions(model: Model, declaredNames: Set<string>): AnalysisFinding[] {
+    const increasesGraph = buildTradeOffGraph(model, 'increases');
+    const reducesGraph = buildTradeOffGraph(model, 'reduces');
+    const increasesClosure = computeTransitiveClosure(declaredNames, increasesGraph);
+    const reducesClosure = computeTransitiveClosure(declaredNames, reducesGraph);
+    const findings: AnalysisFinding[] = [];
+
+    for (const source of declaredNames) {
+        const increaseTargets = increasesClosure.get(source) ?? new Set<string>();
+        const reduceTargets = reducesClosure.get(source) ?? new Set<string>();
+
+        for (const target of increaseTargets) {
+            if (target === source || !reduceTargets.has(target)) {
+                continue;
+            }
+
+            findings.push({
+                severity: 'error',
+                message: `Trade-off contradiction: '${source}' increases '${target}' and '${source}' reduces '${target}'.`,
+                node: model,
+                property: 'tradeOffs'
+            });
+        }
+    }
+
+    return findings;
+}
+
+function buildTradeOffGraph(model: Model, relationKind: 'increases' | 'reduces'): Map<string, Set<string>> {
+    const graph = new Map<string, Set<string>>();
+
+    for (const relation of model.tradeOffs.relations) {
+        if (relation.relation !== relationKind) {
+            continue;
+        }
+
+        const left = relation.left.ref?.name;
+        const right = relation.right.ref?.name;
+        if (!left || !right) {
+            continue;
+        }
+
+        const targets = graph.get(left) ?? new Set<string>();
+        targets.add(right);
+        graph.set(left, targets);
+    }
+
+    return graph;
+}
+
+function computeTransitiveClosure(
+    sources: Set<string>,
+    graph: Map<string, Set<string>>
+): Map<string, Set<string>> {
+    const closure = new Map<string, Set<string>>();
+
+    for (const source of sources) {
+        const visited = new Set<string>([source]);
+        const stack = [source];
+
+        while (stack.length > 0) {
+            const current = stack.pop();
+            if (!current) {
+                continue;
+            }
+
+            const targets = graph.get(current);
+            if (!targets) {
+                continue;
+            }
+
+            for (const target of targets) {
+                if (visited.has(target)) {
+                    continue;
+                }
+
+                visited.add(target);
+                stack.push(target);
+            }
+        }
+
+        closure.set(source, visited);
+    }
+
+    return closure;
+}
+
+function evaluateConfiguration(
+    model: Model,
+    treeContext: TreeAnalysisContext,
+    selectedSet: Set<string>,
+    priorityGroupByFeature: Map<string, number>
+): ConfigurationAnalysisResult {
+    const findings: AnalysisFinding[] = [];
+
+    for (const selectedName of selectedSet) {
+        if (!treeContext.nodesByFeature.has(selectedName)) {
+            findings.push({
+                severity: 'error',
+                message: `Selected feature '${selectedName}' is not present in the feature tree.`,
+                node: model.configuration,
+                property: 'priorityGroups'
+            });
+        }
+    }
+
+    const selectedForTreeRules = new Set(selectedSet);
+    selectedForTreeRules.add(model.tree.root);
+
+    for (const [child, parents] of treeContext.parentByChild.entries()) {
+        if (selectedSet.has(child)) {
+            const hasSelectedParent = [...parents].some(parent => selectedForTreeRules.has(parent));
+            if (!hasSelectedParent) {
+                findings.push({
+                    severity: 'error',
+                    message: `Feature '${child}' is selected but none of its parents are selected.`,
+                    node: treeContext.nodesByFeature.get(child)?.[0] ?? model.tree,
+                    property: 'feature'
+                });
+            }
+        }
+    }
+
+    for (const edge of treeContext.mandatoryEdges) {
+        if (selectedForTreeRules.has(edge.parent) && !selectedForTreeRules.has(edge.child)) {
+            findings.push({
+                severity: 'error',
+                message: `Feature '${edge.child}' is mandatory when '${edge.parent}' is selected.`,
+                node: edge.node,
+                property: 'child'
+            });
+        }
+    }
+
+    for (const group of treeContext.orGroups) {
+        if (selectedForTreeRules.has(group.parent)) {
+            const selectedChildren = group.children.filter(child => selectedForTreeRules.has(child)).length;
+            if (selectedChildren < 1) {
+                findings.push({
+                    severity: 'error',
+                    message: `Or-group under '${group.parent}' requires at least one selected child.`,
+                    node: group.node
+                });
+            }
+        }
+    }
+
+    for (const group of treeContext.alternativeGroups) {
+        if (selectedForTreeRules.has(group.parent)) {
+            const selectedChildren = group.children.filter(child => selectedForTreeRules.has(child)).length;
+            if (selectedChildren !== 1) {
+                findings.push({
+                    severity: 'error',
+                    message: `Alternative group under '${group.parent}' requires exactly one selected child.`,
+                    node: group.node
+                });
+            }
+        }
+    }
+
+    for (const constraint of model.hardConstraints.constraints) {
+        const left = constraint.left.ref?.name;
+        const right = constraint.right.ref?.name;
+        if (!left || !right) {
+            continue;
+        }
+        if (constraint.relation === 'requires' && selectedSet.has(left) && !selectedSet.has(right)) {
+            findings.push({
+                severity: 'error',
+                message: `Hard constraint violated: '${left}' requires '${right}'.`,
+                node: constraint,
+                property: 'right'
+            });
+        }
+        if (constraint.relation === 'excludes' && selectedSet.has(left) && selectedSet.has(right)) {
+            findings.push({
+                severity: 'error',
+                message: `Hard constraint violated: '${left}' excludes '${right}'.`,
+                node: constraint,
+                property: 'right'
+            });
+        }
+    }
+
+    let minScore = 0;
+    let maxScore = 0;
+    let rawScore = 0;
+    let activeTradeOffs = 0;
+
+    for (const relation of model.tradeOffs.relations) {
+        const evaluated = evaluateTradeOffRelation(relation, selectedSet, priorityGroupByFeature);
+        if (!evaluated) {
+            continue;
+        }
+
+        activeTradeOffs += 1;
+        minScore -= evaluated.weight;
+        maxScore += evaluated.weight;
+        rawScore += evaluated.value;
+
+        if (evaluated.warningMessage) {
+            findings.push({
+                severity: 'warning',
+                message: evaluated.warningMessage,
+                node: relation
+            });
+        }
+    }
+
+    return {
+        findings,
+        rawScore,
+        minScore,
+        maxScore,
+        activeTradeOffs
+    };
+}
+
+function countValidConfigurations(model: Model, treeContext: TreeAnalysisContext): number {
+    if (collectStaticFindings(model, treeContext).some(finding => finding.severity !== 'info')) {
+        return 0;
+    }
+
+    const featureNames = model.qualityAttributes.declarations.map(declaration => declaration.name);
+    let validConfigurations = 0;
+
+    for (let groupCount = 0; groupCount <= featureNames.length; groupCount += 1) {
+        const groups: string[][] = Array.from({ length: groupCount }, () => []);
+
+        const visit = (featureIndex: number): void => {
+            if (featureIndex >= featureNames.length) {
+                if (groupCount > 0 && groups.some(group => group.length === 0)) {
+                    return;
+                }
+
+                const selectedSet = new Set<string>();
+                const priorityGroupByFeature = new Map<string, number>();
+
+                for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
+                    for (const featureName of groups[groupIndex]) {
+                        selectedSet.add(featureName);
+                        priorityGroupByFeature.set(featureName, groupIndex);
+                    }
+                }
+
+                const analysis = evaluateConfiguration(model, treeContext, selectedSet, priorityGroupByFeature);
+                if (!analysis.findings.some(finding => finding.severity !== 'info')) {
+                    validConfigurations += 1;
+                }
+                return;
+            }
+
+            visit(featureIndex + 1);
+
+            for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
+                groups[groupIndex].push(featureNames[featureIndex]);
+                visit(featureIndex + 1);
+                groups[groupIndex].pop();
+            }
+        };
+
+        visit(0);
+    }
+
+    return validConfigurations;
 }
 
 function normalizeScore(rawScore: number, minScore: number, maxScore: number): number {

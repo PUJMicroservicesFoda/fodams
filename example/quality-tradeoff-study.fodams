@@ -61,7 +61,7 @@ constraints {
 }
 
 tradeOffs {
-    Latency conflictsWith Consistency strength strong;
+    Latency increases Consistency strength strong;
     Performance increases Scalability strength medium;
     Availability increases HighEnergyConsumption strength weak;
     Security moreImportantThan LowCoupling;

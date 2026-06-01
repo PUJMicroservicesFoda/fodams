@@ -22,6 +22,7 @@ export const analyzeAction = async (fileName: string, opts: GenerateOptions): Pr
 
     console.log(chalk.green(`Analysis report generated successfully: ${generatedFilePath}`));
     console.log(chalk.cyan(`Normalized score: ${analysis.score}/100`));
+    console.log(chalk.cyan(`Max valid configurations: ${analysis.maxValidConfigurations}`));
 
     if (analysis.findings.length > 0) {
         console.log(chalk.cyan(`Findings: ${analysis.findings.length}`));

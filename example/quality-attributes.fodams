@@ -102,6 +102,7 @@ constraints {
 
 tradeOffs {
     Consistency           reduces           Availability;
+    Consistency          increases          Availability;
     Latency               reduces           Consistency;
     // Consistency           increases         Latency;
     Granularity           reduces           Performance;

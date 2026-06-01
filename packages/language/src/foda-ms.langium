@@ -64,7 +64,7 @@ TradeOffRelation:
     ';';
 
 TradeOffKind returns string:
-    'conflictsWith' | 'increases' | 'reduces' | 'moreImportantThan';
+    'increases' | 'reduces' | 'moreImportantThan';
 
 TradeOffStrength returns string:
     'weak' | 'medium' | 'strong';

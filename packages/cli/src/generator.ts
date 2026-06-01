@@ -21,6 +21,7 @@ export function generateAnalysisReport(model: Model, filePath: string, destinati
         NormalizedScore: ${result.score}/100
         ActiveTradeOffs: ${result.activeTradeOffs}
         RawTradeOffScore: ${result.rawScore}
+        MaxValidConfigurations: ${result.maxValidConfigurations}
 
         SelectedFeatures:
         ${joinToNode(selectedFeatures, feature => `- ${feature}`, { appendNewLineIfNotEmpty: true })}
