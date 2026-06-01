@@ -25,5 +25,5 @@ tradeOffs {
 }
 
 configuration {
-    priorityGroup { QualityAttributes, Security, Performance, Availability };
+    priorityGroup { QualityAttributes; Security; Performance; Availability; }
 }

@@ -51,7 +51,7 @@ describe('Linking tests', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Security, Availability };
+                priorityGroup { QualityAttributes; Security; Availability; }
             }
         `);
 

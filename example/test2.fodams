@@ -16,10 +16,16 @@ constraints {
 tradeOffs {
     Performance increases Scalability;
     Scalability increases HighEnergyConsumption;
-    Performance reduces Scalability;
+    HighEnergyConsumption reduces Performance;
+    
 }
 
 configuration {
-    priorityGroup { Performance; HighEnergyConsumption; }
+    priorityGroup { 
+        Performance;
+    }
+    priorityGroup { 
+        HighEnergyConsumption;
+    }
     priorityGroup { Scalability; }
 }

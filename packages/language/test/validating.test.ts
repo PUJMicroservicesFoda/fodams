@@ -49,9 +49,9 @@ describe('Validating', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Security, Performance };
-                priorityGroup { Availability };
-                priorityGroup { Latency };
+                priorityGroup { QualityAttributes; Security; Performance; }
+                priorityGroup { Availability; }
+                priorityGroup { Latency; }
             }
         `);
 
@@ -85,7 +85,7 @@ describe('Validating', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Security };
+                priorityGroup { QualityAttributes; Security; }
             }
         `);
 
@@ -123,8 +123,8 @@ describe('Validating', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Performance, Reliability };
-                priorityGroup { Scalability };
+                priorityGroup { QualityAttributes; Performance; Reliability; }
+                priorityGroup { Scalability; }
             }
         `);
 
@@ -156,8 +156,8 @@ describe('Validating', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes };
-                priorityGroup { Performance };
+                priorityGroup { QualityAttributes; }
+                priorityGroup { Performance; }
             }
         `);
 
@@ -190,7 +190,7 @@ describe('Validating', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes, Consistency, Availability };
+                priorityGroup { QualityAttributes; Consistency; Availability; }
             }
         `);
 
@@ -227,8 +227,8 @@ describe('Validating', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes };
-                priorityGroup { Performance };
+                priorityGroup { QualityAttributes; }
+                priorityGroup { Performance; }
             }
         `);
 

@@ -125,55 +125,55 @@ tradeOffs {
 
 configuration {
     priorityGroup {
-        FunctionalSuitability,
-        Consistency,
+        FunctionalSuitability;
+        Consistency;
 
-        Confidentiality,
-        Integrity,
-        Authenticity,
+        Confidentiality;
+        Integrity;
+        Authenticity;
 
-        Throughput,
-        ResourceUtilization,
-        Elasticity,
-        ExecutionCost,
+        Throughput;
+        ResourceUtilization;
+        Elasticity;
+        ExecutionCost;
 
-        Compatibility,
-        Interoperability,
+        Compatibility;
+        Interoperability;
 
-        Reliability,
-        FaultTolerance,
-        Robustness,
-        Resiliency,
+        Reliability;
+        FaultTolerance;
+        Robustness;
+        Resiliency;
 
-        Maintainability,
-        Reusability,
-        Testability,
-        Deployment,
-        Extensibility,
-        Sustainability,
-        Flexibility,
+        Maintainability;
+        Reusability;
+        Testability;
+        Deployment;
+        Extensibility;
+        Sustainability;
+        Flexibility;
 
-        Portability,
-        Security,
-        Adaptability,
-        Availability
-    };
-
-    priorityGroup {
-        SingleUnitDeployment,
-        Scalability,
-        Performance,
-        Latency
-
-    };
+        Portability;
+        Security;
+        Adaptability;
+        Availability;
+    }
 
     priorityGroup {
-        Granularity,
-        Coupling,
-        Complexity,
-        EnergyConsumption
+        SingleUnitDeployment;
+        Scalability;
+        Performance;
+        Latency;
 
-    };
+    }
+
+    priorityGroup {
+        Granularity;
+        Coupling;
+        Complexity;
+        EnergyConsumption;
+
+    }
 
 
 }

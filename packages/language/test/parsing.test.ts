@@ -56,8 +56,8 @@ describe('Parsing tests', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes, FunctionalSuitability, Granularity, CoarseGranularity };
-                priorityGroup { Performance, Latency };
+                priorityGroup { QualityAttributes; FunctionalSuitability; Granularity; CoarseGranularity; }
+                priorityGroup { Performance; Latency; }
             }
         `);
 

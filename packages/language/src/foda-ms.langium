@@ -75,7 +75,7 @@ Configuration:
     '}';
 
 PriorityGroup:
-    'priorityGroup' '{' selected+=[QualityAttributeDeclaration:ID] (',' selected+=[QualityAttributeDeclaration:ID])* '}' ';';
+    'priorityGroup' '{' (selected+=[QualityAttributeDeclaration:ID] ';')* '}';
 
 hidden terminal WS: /\s+/;
 terminal ID: /[_a-zA-Z][\w_]*/;
