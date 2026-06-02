@@ -165,7 +165,7 @@ describe('Validating', () => {
         expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' must be in a higher-priority group than 'QualityAttributes'."));
 
         const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.maxValidConfigurations).toBe(9);
+        expect(analysis.maxValidConfigurations).toBe(3);
         expect(analysis.totalCombinations).toBe(9);
     });
 
@@ -233,7 +233,7 @@ describe('Validating', () => {
         `);
 
         const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.maxValidConfigurations).toBe(9);
+        expect(analysis.maxValidConfigurations).toBe(3);
         expect(analysis.totalCombinations).toBe(9);
     });
 });

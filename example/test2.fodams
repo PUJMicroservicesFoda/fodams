@@ -1,31 +1,26 @@
 qualityAttributes {
-    quality Performance;
-    quality Scalability;
-    quality HighEnergyConsumption;
+    quality A;
+    quality B;
 }
 
 featureTree QualityAttributes {
-    optional Performance;
-    optional Scalability;
-    optional HighEnergyConsumption;
+    optional A;
+    optional B;
 };
 
 constraints {
 }
 
 tradeOffs {
-    Performance increases Scalability;
-    Scalability increases HighEnergyConsumption;
-    HighEnergyConsumption reduces Performance;
+    A increases B;
     
 }
 
 configuration {
     priorityGroup { 
-        Performance;
+        A;
     }
     priorityGroup { 
-        HighEnergyConsumption;
+        B;
     }
-    priorityGroup { Scalability; }
 }
