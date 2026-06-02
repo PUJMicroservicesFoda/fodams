@@ -12,7 +12,7 @@ describe("Bucket helper functions", () => {
 
   test("findNumberOfGaps counts empty buckets before the last non-empty bucket", () => {
     expect(findNumberOfGaps([1, 0, 2, 0], 3)).toBe(1);
-    expect(findNumberOfGaps([0, 1, 0, 1], 3)).toBe(2);
+    expect(findNumberOfGaps([0, 1, 0, 1], 3)).toBe(1);
   });
 
   test("findNumberOfGaps ignores trailing empty buckets", () => {

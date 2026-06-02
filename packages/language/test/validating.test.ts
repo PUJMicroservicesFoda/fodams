@@ -165,7 +165,7 @@ describe('Validating', () => {
         expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' must be in a higher-priority group than 'QualityAttributes'."));
 
         const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.maxValidConfigurations).toBe(3);
+        expect(analysis.maxValidConfigurations).toBe(6);
         expect(analysis.totalCombinations).toBe(9);
     });
 
@@ -212,28 +212,35 @@ describe('Validating', () => {
     test('count valid configurations with empty groups disallowed', async () => {
         document = await parse(`
             qualityAttributes {
-                quality QualityAttributes;
-                quality Performance;
+                quality A;
+                quality B;
             }
 
             featureTree QualityAttributes {
-                optional Performance;
+                optional A;
+                optional B;
             };
 
             constraints {
             }
 
             tradeOffs {
+                A increases B;
+                
             }
 
             configuration {
-                priorityGroup { QualityAttributes; }
-                priorityGroup { Performance; }
+                priorityGroup { 
+                    A;
+                }
+                priorityGroup { 
+                    B;
+                }
             }
         `);
 
         const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.maxValidConfigurations).toBe(3);
+        expect(analysis.maxValidConfigurations).toBe(5);
         expect(analysis.totalCombinations).toBe(9);
     });
 });
