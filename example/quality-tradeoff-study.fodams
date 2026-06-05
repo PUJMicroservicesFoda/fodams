@@ -65,17 +65,10 @@ constraints {
 }
 
 tradeOffs {
-    Latency increases Consistency {
-        strength = high;
-    }
-    Performance increases Scalability {
-        strength = medium;
-    }
-    Availability increases HighEnergyConsumption {
-        strength = low;
-    }
-    Security moreImportantThan LowCoupling {
-    }
+    Latency increases Consistency;
+    Performance increases Scalability;
+    Availability increases HighEnergyConsumption;
+    Security moreImportantThan LowCoupling;
 }
 
 configuration {

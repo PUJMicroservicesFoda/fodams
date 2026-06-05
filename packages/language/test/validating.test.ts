@@ -281,6 +281,134 @@ describe('Validating', () => {
         expect(analysis.maxValidConfigurations).toBe(5);
         expect(analysis.totalCombinations).toBe(9);
     });
+
+    test('domain filtering: non-matching trade-offs are excluded from score', async () => {
+        document = await parse(`
+            domain {
+                IoT;
+                batch;
+            }
+
+            qualityAttributes {
+                quality A;
+                quality B;
+                quality C;
+            }
+
+            featureTree QualityAttributes {
+                optional A;
+                optional B;
+                optional C;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                A increases B {
+                    domain = IoT;
+                    strength = high;
+                }
+                A reduces C {
+                    domain = batch;
+                    strength = high;
+                }
+            }
+
+            configuration {
+                domain = IoT;
+                priority High { A; B; C; }
+            }
+        `);
+
+        const analysis = analyzeModel(document!.parseResult.value);
+        // Only the IoT trade-off (A increases B) should be active; the batch trade-off is excluded.
+        expect(analysis.activeTradeOffs).toBe(1);
+    });
+
+    test('domain filtering: bodyless trade-offs apply universally', async () => {
+        document = await parse(`
+            domain {
+                IoT;
+                batch;
+            }
+
+            qualityAttributes {
+                quality A;
+                quality B;
+                quality C;
+            }
+
+            featureTree QualityAttributes {
+                optional A;
+                optional B;
+                optional C;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                A increases B;
+                A reduces C {
+                    domain = IoT;
+                    strength = high;
+                }
+            }
+
+            configuration {
+                domain = batch;
+                priority High { A; B; C; }
+            }
+        `);
+
+        const analysis = analyzeModel(document!.parseResult.value);
+        // Bodyless trade-off always applies; IoT-specific trade-off is excluded for batch domain.
+        expect(analysis.activeTradeOffs).toBe(1);
+    });
+
+    test('domain filtering: no config domain means all trade-offs apply', async () => {
+        document = await parse(`
+            domain {
+                IoT;
+                batch;
+            }
+
+            qualityAttributes {
+                quality A;
+                quality B;
+                quality C;
+            }
+
+            featureTree QualityAttributes {
+                optional A;
+                optional B;
+                optional C;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                A increases B {
+                    domain = IoT;
+                    strength = high;
+                }
+                A reduces C {
+                    domain = batch;
+                    strength = high;
+                }
+            }
+
+            configuration {
+                priority High { A; B; C; }
+            }
+        `);
+
+        const analysis = analyzeModel(document!.parseResult.value);
+        // No domain selected in config → all trade-offs apply.
+        expect(analysis.activeTradeOffs).toBe(2);
+    });
 });
 
 function checkDocumentValid(document: LangiumDocument): string | undefined {

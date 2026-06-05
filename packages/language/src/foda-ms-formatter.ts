@@ -162,19 +162,29 @@ export class FodaMsFormatter extends AbstractFormatter {
         if (isTradeOffRelation(node)) {
             const formatter = this.getNodeFormatter(node);
             formatter.property('relation').surround(Formatting.oneSpace());
-            const open = formatter.keyword('{');
-            const close = formatter.keyword('}');
-            open.prepend(Formatting.oneSpace()).append(Formatting.newLine());
-            close.prepend(Formatting.newLine()).append(Formatting.newLine());
-            formatter.interior(open, close).prepend(Formatting.indent());
-            formatter.keyword('domain').prepend(Formatting.newLine()).append(Formatting.oneSpace());
-            formatter.keyword('=').surround(Formatting.oneSpace());
-            formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
-            formatter.keyword('strength').prepend(Formatting.newLine()).append(Formatting.oneSpace());
-            formatter.keyword('evidence').prepend(Formatting.newLine()).append(Formatting.oneSpace());
-            formatter.keyword('[').prepend(Formatting.oneSpace());
-            formatter.keyword(']').prepend(Formatting.noSpace()).append(Formatting.noSpace());
-            formatter.keyword(',').prepend(Formatting.noSpace()).append(Formatting.oneSpace());
+
+            const hasBody =
+                node.domainValue.length > 0 ||
+                node.strength !== undefined ||
+                node.evidence.length > 0;
+
+            if (hasBody) {
+                const open = formatter.keyword('{');
+                const close = formatter.keyword('}');
+                open.prepend(Formatting.oneSpace()).append(Formatting.newLine());
+                close.prepend(Formatting.newLine()).append(Formatting.newLine());
+                formatter.interior(open, close).prepend(Formatting.indent());
+                formatter.keyword('domain').prepend(Formatting.newLine()).append(Formatting.oneSpace());
+                formatter.keyword('=').surround(Formatting.oneSpace());
+                formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
+                formatter.keyword('strength').prepend(Formatting.newLine()).append(Formatting.oneSpace());
+                formatter.keyword('evidence').prepend(Formatting.newLine()).append(Formatting.oneSpace());
+                formatter.keyword('[').prepend(Formatting.oneSpace());
+                formatter.keyword(']').prepend(Formatting.noSpace()).append(Formatting.noSpace());
+                formatter.keyword(',').prepend(Formatting.noSpace()).append(Formatting.oneSpace());
+            } else {
+                formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
+            }
             return;
         }
 

@@ -298,6 +298,22 @@ function tradeOffWeight(strength: TradeOffStrength | undefined): number {
   }
 }
 
+function tradeOffAppliesToDomain(
+  relation: TradeOffRelation,
+  configDomain: string | undefined,
+): boolean {
+  // If the trade-off has no domain restrictions, it applies universally.
+  if (relation.domainValue.length === 0) {
+    return true;
+  }
+  // If no domain is selected in the configuration, all trade-offs apply.
+  if (configDomain === undefined) {
+    return true;
+  }
+  // Trade-off applies only if its domain list includes the config's domain.
+  return relation.domainValue.includes(configDomain);
+}
+
 function evaluateTradeOffRelation(
   relation: TradeOffRelation,
   selectedSet: Set<string>,
@@ -633,12 +649,18 @@ function evaluateConfiguration(
     }
   }
 
+  const configDomain = model.configuration.domainSelection?.ref?.name;
+
   let minScore = 0;
   let maxScore = 0;
   let rawScore = 0;
   let activeTradeOffs = 0;
 
   for (const relation of model.tradeOffs.relations) {
+    if (!tradeOffAppliesToDomain(relation, configDomain)) {
+      continue;
+    }
+
     const evaluated = evaluateTradeOffRelation(
       relation,
       selectedSet,
@@ -696,9 +718,15 @@ function estimateValidConfigurations(
     featureIndexByName.set(declaration.name, index);
   });
 
+  const configDomain = model.configuration.domainSelection?.ref?.name;
+
   const forbiddenPairSet = new Set<string>();
   for (const relation of model.tradeOffs.relations) {
     if (relation.relation !== "increases" && relation.relation !== "reduces") {
+      continue;
+    }
+
+    if (!tradeOffAppliesToDomain(relation, configDomain)) {
       continue;
     }
 
