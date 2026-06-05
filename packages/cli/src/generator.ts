@@ -14,9 +14,15 @@ export function generateAnalysisReport(model: Model, filePath: string, destinati
         .map(selected => selected.ref?.name)
         .filter((name): name is string => Boolean(name));
 
+    const domainName = model.configuration.domainSelection?.ref?.name ?? '(none)';
+    const declaredDomains = model.domain.domains.map(d => d.name).join(', ');
+
     const fileNode = expandToNode`
         FODA-MS Feature-Oriented Model Analysis
         =======================================
+
+        Domain: ${domainName}
+        Declared Domains: ${declaredDomains}
 
         Normalized Score: ${result.score}/100
         Active Trade Offs: ${result.activeTradeOffs}

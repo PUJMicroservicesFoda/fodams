@@ -21,6 +21,11 @@ describe('Parsing tests', () => {
 
     test('parse simple Model', async () => {
         document = await parse(`
+            domain {
+                all;
+                web;
+            }
+
             qualityAttributes {
                 quality QualityAttributes;
                 quality FunctionalSuitability;
@@ -49,15 +54,23 @@ describe('Parsing tests', () => {
             }
 
             tradeOffs {
-                Performance increases Throughput strength weak;
-                FineGranularity reduces Performance strength strong;
-                Throughput reduces Latency strength medium;
-                Performance moreImportantThan Latency strength medium;
+                Performance increases Throughput {
+                    strength = low;
+                }
+                FineGranularity reduces Performance {
+                    strength = high;
+                }
+                Throughput reduces Latency {
+                    strength = medium;
+                }
+                Performance moreImportantThan Latency {
+                    strength = medium;
+                }
             }
 
             configuration {
-                priorityGroup { QualityAttributes; FunctionalSuitability; Granularity; CoarseGranularity; }
-                priorityGroup { Performance; Latency; }
+                priority High { QualityAttributes; FunctionalSuitability; Granularity; CoarseGranularity; }
+                priority Low { Performance; Latency; }
             }
         `);
 
@@ -93,8 +106,8 @@ describe('Parsing tests', () => {
                         'FineGranularity excludes Performance'
                 ]);
                 expect(model.tradeOffs.relations.map(r => `${r.left.$refText} ${r.relation} ${r.right.$refText} (${r.strength ?? 'medium'})`)).toEqual([
-                    'Performance increases Throughput (weak)',
-                    'FineGranularity reduces Performance (strong)',
+                    'Performance increases Throughput (low)',
+                    'FineGranularity reduces Performance (high)',
                     'Throughput reduces Latency (medium)',
                     'Performance moreImportantThan Latency (medium)'
                 ]);

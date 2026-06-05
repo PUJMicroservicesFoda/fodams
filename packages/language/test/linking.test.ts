@@ -25,6 +25,11 @@ describe('Linking tests', () => {
 
     test('linking of quality attributes', async () => {
         document = await parse(`
+            domain {
+                all;
+                web;
+            }
+
             qualityAttributes {
                 quality QualityAttributes;
                 quality Security;
@@ -47,11 +52,14 @@ describe('Linking tests', () => {
             }
 
             tradeOffs {
-                Security increases Availability strength strong;
+                Security increases Availability {
+                    strength = high;
+                }
             }
 
             configuration {
-                priorityGroup { QualityAttributes; Security; Availability; }
+                domain = web;
+                priority High { QualityAttributes; Security; Availability; }
             }
         `);
 

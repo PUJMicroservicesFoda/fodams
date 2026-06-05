@@ -1,3 +1,15 @@
+domain {
+  all;
+  e-commerce;
+  web;
+  IoT;
+  CPS;
+  reactive;
+  batch;
+  e-health;
+  messaging;
+}
+
 qualityAttributes {
     quality FunctionalSuitability;
     quality Consistency;
@@ -101,30 +113,154 @@ constraints {
 }
 
 tradeOffs {
-    Consistency           reduces           Availability;
-    Latency               reduces           Consistency;
-    Consistency           increases         Latency;
-    Granularity           reduces           Performance;
-    SingleUnitDeployment  reduces           Granularity;
-    Security              reduces           Performance;
-    Security              reduces           Scalability;
-    Security              increases         Complexity;
-    SingleUnitDeployment  reduces           Scalability;
-    Availability          increases         EnergyConsumption;
-    Scalability           increases         EnergyConsumption;
-    Performance           increases         EnergyConsumption;
-    Reliability           increases         EnergyConsumption;
-    Availability          increases         EnergyConsumption;
-    Elasticity            increases         EnergyConsumption;
-    Availability          increases         Complexity;
-    Availability          increases         Scalability;
-    Performance           increases         Complexity;
-    Security              increases         Coupling;
-    Reliability           increases         Coupling;
+  Consistency reduces Availability {
+    domain = all;
+    strength = high;
+    evidence = [gilbert_brewers_2002, rossi_consistency_2019];
+  }
+
+  Latency reduces Consistency {
+    domain = all;
+    strength = high;
+    evidence = [abadi_consistency_2012];
+  }
+
+  Consistency increases Latency {
+    domain = all;
+    strength = high;
+    evidence = [abadi_consistency_2012];
+  }
+
+  Granularity reduces Performance {
+    domain = e-commerce, web;
+    strength = high;
+    evidence = [shadija_microservices_2017, rosa_charm_2023];
+  }
+
+  Granularity increases Complexity {
+    domain = e-commerce, web;
+    strength = medium;
+    evidence = [shadija_microservices_2017, rosa_charm_2023];
+  }
+
+  Security reduces Performance {
+    domain = web, IoT, reactive;
+    strength = high;
+    evidence = [bermbach_quality_2017, rezaei_nasab_empirical_2023, vale_designing_2022];
+  }
+
+  Security reduces Scalability {
+    domain = IoT, reactive;
+    strength = high;
+    evidence = [rezaei_nasab_empirical_2023];
+  }
+
+  Security increases Complexity {
+    domain = IoT, reactive;
+    strength = high;
+    evidence = [rezaei_nasab_empirical_2023, vale_designing_2022];
+  }
+
+  Availability increases EnergyConsumption {
+    domain = IoT, CPS, reactive;
+    strength = high;
+    evidence = [araujo_energy_2024, dinga_empirical_2023, pinciroli_modular_2023];
+  }
+
+  Scalability increases EnergyConsumption {
+    domain = IoT, CPS, e-commerce;
+    strength = high;
+    evidence = [araujo_energy_2024, dinga_empirical_2023];
+  }
+
+  Performance increases EnergyConsumption {
+    domain = CPS, web, batch;
+    strength = medium;
+    evidence = [araujo_energy_2024, dinga_empirical_2023, pinciroli_modular_2023];
+  }
+
+  Reliability increases EnergyConsumption {
+    domain = IoT, CPS, reactive;
+    strength = medium;
+    evidence = [araujo_energy_2024];
+  }
+
+  Elasticity increases EnergyConsumption {
+    domain = IoT;
+    strength = medium;
+    evidence = [araujo_energy_2024];
+  }
+
+  Availability increases Complexity {
+    domain = e-commerce, web, e-health, messaging;
+    strength = medium;
+    evidence = [vale_designing_2022];
+  }
+
+  Availability increases Scalability {
+    domain = e-commerce, messaging;
+    strength = high;
+    evidence = [vale_designing_2022];
+  }
+
+  Performance increases Complexity {
+    domain = web, batch, reactive;
+    strength = medium;
+    evidence = [vale_designing_2022];
+  }
+
+  Security increases Coupling {
+    domain = IoT, e-health, reactive;
+    strength = medium;
+    evidence = [rezaei_nasab_empirical_2023, rosa_charm_2023];
+  }
+
+  Reliability increases Coupling {
+    domain = IoT, e-health, reactive;
+    strength = medium;
+    evidence = [vale_designing_2022];
+  }
+
+  ExecutionCost reduces Performance {
+    domain = batch;
+    strength = high;
+    evidence = [kuhlenkamp_benchmarking_2020, avritzer_quantitative_2018];
+  }
+
+  ExecutionCost reduces Scalability {
+    domain = batch;
+    strength = medium;
+    evidence = [kuhlenkamp_benchmarking_2020];
+  }
+
+  Performance increases ExecutionCost {
+    domain = batch;
+    strength = medium;
+    evidence = [kuhlenkamp_benchmarking_2020, avritzer_quantitative_2018];
+  }
+
+  Interoperability increases Complexity {
+    domain = IoT, e-health;
+    strength = high;
+    evidence = [rosa_charm_2023, calderon-gomez_evaluating_2021];
+  }
+
+  Interoperability reduces Granularity {
+    domain = e-health;
+    strength = medium;
+    evidence = [calderon-gomez_evaluating_2021];
+  }
+
+  Adaptability increases Complexity {
+    domain = e-health;
+    strength = medium;
+    evidence = [jurado_perez_approach_2021];
+  }
 }
 
 configuration {
-    priorityGroup {
+    domain = IoT;
+    priority High {
         FunctionalSuitability;
         Consistency;
 
@@ -159,7 +295,7 @@ configuration {
         Availability;
     }
 
-    priorityGroup {
+    priority Medium {
         SingleUnitDeployment;
         Scalability;
         Performance;
@@ -167,7 +303,7 @@ configuration {
 
     }
 
-    priorityGroup {
+    priority Low {
         Granularity;
         Coupling;
         Complexity;

@@ -1,3 +1,7 @@
+domain {
+    all;
+}
+
 qualityAttributes {
     quality QualityAttributes;
     quality FunctionalSuitability;
@@ -61,14 +65,21 @@ constraints {
 }
 
 tradeOffs {
-    Latency increases Consistency strength strong;
-    Performance increases Scalability strength medium;
-    Availability increases HighEnergyConsumption strength weak;
-    Security moreImportantThan LowCoupling;
+    Latency increases Consistency {
+        strength = high;
+    }
+    Performance increases Scalability {
+        strength = medium;
+    }
+    Availability increases HighEnergyConsumption {
+        strength = low;
+    }
+    Security moreImportantThan LowCoupling {
+    }
 }
 
 configuration {
-    priorityGroup {
+    priority High {
         QualityAttributes;
         FunctionalSuitability;
         Granularity;

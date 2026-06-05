@@ -1,11 +1,20 @@
 grammar FodaMs
 
 entry Model:
+    domain=DomainSection
     qualityAttributes=QualityAttributesSection
     tree=FeatureTree
     hardConstraints=HardConstraintSection
     tradeOffs=TradeOffSection
     configuration=Configuration;
+
+DomainSection:
+    'domain' '{'
+        domains+=DomainItem*
+    '}';
+
+DomainItem:
+    name=ID ';';
 
 QualityAttributesSection:
     'qualityAttributes' '{'
@@ -60,25 +69,32 @@ TradeOffRelation:
     left=[QualityAttributeDeclaration:ID]
     relation=TradeOffKind
     right=[QualityAttributeDeclaration:ID]
-    ('strength' strength=TradeOffStrength)?
-    ';';
+    '{'
+        ('domain' '=' domainValue+=ID (',' domainValue+=ID)* ';')?
+        ('strength' '=' strength=TradeOffStrength ';')?
+        ('evidence' '=' '[' (evidence+=EvidenceRef (',' evidence+=EvidenceRef)*)? ']' ';')?
+    '}';
+
+EvidenceRef:
+    name=ID;
 
 TradeOffKind returns string:
     'increases' | 'reduces' | 'moreImportantThan';
 
 TradeOffStrength returns string:
-    'weak' | 'medium' | 'strong';
+    'low' | 'medium' | 'high';
 
 Configuration:
     'configuration' '{'
+        ('domain' '=' domainSelection=[DomainItem:ID] ';')?
         priorityGroups+=PriorityGroup+
     '}';
 
 PriorityGroup:
-    'priorityGroup' '{' (selected+=[QualityAttributeDeclaration:ID] ';')* '}';
+    'priority' label=ID '{' (selected+=[QualityAttributeDeclaration:ID] ';')* '}';
 
 hidden terminal WS: /\s+/;
-terminal ID: /[_a-zA-Z][\w_]*/;
+terminal ID: /[_a-zA-Z][\-\w_]*/;
 
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
 hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;

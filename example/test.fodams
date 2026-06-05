@@ -1,3 +1,7 @@
+domain {
+    all;
+}
+
 qualityAttributes {
     quality Performance;
     quality Scalability;
@@ -14,12 +18,15 @@ constraints {
 }
 
 tradeOffs {
-    Performance increases Scalability;
-    Scalability increases HighEnergyConsumption;
-    Performance reduces Scalability;
+    Performance increases Scalability {
+    }
+    Scalability increases HighEnergyConsumption {
+    }
+    Performance reduces Scalability {
+    }
 }
 
 configuration {
-    priorityGroup { Performance; HighEnergyConsumption; }
-    priorityGroup { Scalability; }
+    priority High { Performance; HighEnergyConsumption; }
+    priority Low { Scalability; }
 }

@@ -1,3 +1,7 @@
+domain {
+    all;
+}
+
 qualityAttributes {
     quality QualityAttributes;
     quality Performance;
@@ -58,14 +62,20 @@ constraints {
 }
 
 tradeOffs {
-    Performance increases HighEnergyConsumption strength strong;
-    Performance increases Throughput;
-    Reusability moreImportantThan Testability strength medium;
-    Security increases Integrity;
+    Performance increases HighEnergyConsumption {
+        strength = high;
+    }
+    Performance increases Throughput {
+    }
+    Reusability moreImportantThan Testability {
+        strength = medium;
+    }
+    Security increases Integrity {
+    }
 }
 
 configuration {
-    priorityGroup {
+    priority High {
         QualityAttributes;
         Performance;
         Latency;

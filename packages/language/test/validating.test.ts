@@ -23,6 +23,10 @@ describe('Validating', () => {
 
     test('check no errors', async () => {
         document = await parse(`
+            domain {
+                all;
+            }
+
             qualityAttributes {
                 quality QualityAttributes;
                 quality Security;
@@ -44,14 +48,18 @@ describe('Validating', () => {
             }
 
             tradeOffs {
-                Security increases Availability strength strong;
-                Performance increases Latency strength medium;
+                Security increases Availability {
+                    strength = high;
+                }
+                Performance increases Latency {
+                    strength = medium;
+                }
             }
 
             configuration {
-                priorityGroup { QualityAttributes; Security; Performance; }
-                priorityGroup { Availability; }
-                priorityGroup { Latency; }
+                priority High { QualityAttributes; Security; Performance; }
+                priority Medium { Availability; }
+                priority Low { Latency; }
             }
         `);
 
@@ -66,6 +74,10 @@ describe('Validating', () => {
 
     test('check hard constraint violation', async () => {
         document = await parse(`
+            domain {
+                all;
+            }
+
             qualityAttributes {
                 quality QualityAttributes;
                 quality Security;
@@ -85,7 +97,7 @@ describe('Validating', () => {
             }
 
             configuration {
-                priorityGroup { QualityAttributes; Security; }
+                priority High { QualityAttributes; Security; }
             }
         `);
 
@@ -95,6 +107,10 @@ describe('Validating', () => {
 
     test('check direct and transitive trade-off contradictions', async () => {
         document = await parse(`
+            domain {
+                all;
+            }
+
             qualityAttributes {
                 quality QualityAttributes;
                 quality Performance;
@@ -114,17 +130,23 @@ describe('Validating', () => {
             }
 
             tradeOffs {
-                Performance increases Reliability;
-                Performance reduces Reliability;
-                Reliability increases Scalability;
-                Performance reduces Maintainability;
-                Maintainability increases Scalability;
-                Performance reduces Scalability;
+                Performance increases Reliability {
+                }
+                Performance reduces Reliability {
+                }
+                Reliability increases Scalability {
+                }
+                Performance reduces Maintainability {
+                }
+                Maintainability increases Scalability {
+                }
+                Performance reduces Scalability {
+                }
             }
 
             configuration {
-                priorityGroup { QualityAttributes; Performance; Reliability; }
-                priorityGroup { Scalability; }
+                priority High { QualityAttributes; Performance; Reliability; }
+                priority Low { Scalability; }
             }
         `);
 
@@ -139,6 +161,10 @@ describe('Validating', () => {
 
     test('check moreImportantThan priority ordering', async () => {
         document = await parse(`
+            domain {
+                all;
+            }
+
             qualityAttributes {
                 quality QualityAttributes;
                 quality Performance;
@@ -152,12 +178,14 @@ describe('Validating', () => {
             }
 
             tradeOffs {
-                Performance moreImportantThan QualityAttributes strength strong;
+                Performance moreImportantThan QualityAttributes {
+                    strength = high;
+                }
             }
 
             configuration {
-                priorityGroup { QualityAttributes; }
-                priorityGroup { Performance; }
+                priority Low { QualityAttributes; }
+                priority High { Performance; }
             }
         `);
 
@@ -171,6 +199,10 @@ describe('Validating', () => {
 
     test('warn when reduces pair is in same priority group', async () => {
         document = await parse(`
+            domain {
+                all;
+            }
+
             qualityAttributes {
                 quality QualityAttributes;
                 quality Consistency;
@@ -186,11 +218,12 @@ describe('Validating', () => {
             }
 
             tradeOffs {
-                Consistency reduces Availability;
+                Consistency reduces Availability {
+                }
             }
 
             configuration {
-                priorityGroup { QualityAttributes; Consistency; Availability; }
+                priority High { QualityAttributes; Consistency; Availability; }
             }
         `);
 
@@ -211,6 +244,10 @@ describe('Validating', () => {
 
     test('count valid configurations with empty groups disallowed', async () => {
         document = await parse(`
+            domain {
+                all;
+            }
+
             qualityAttributes {
                 quality A;
                 quality B;
@@ -225,15 +262,16 @@ describe('Validating', () => {
             }
 
             tradeOffs {
-                A increases B;
-                
+                A increases B {
+                    
+                }
             }
 
             configuration {
-                priorityGroup { 
+                priority High { 
                     A;
                 }
-                priorityGroup { 
+                priority Low { 
                     B;
                 }
             }

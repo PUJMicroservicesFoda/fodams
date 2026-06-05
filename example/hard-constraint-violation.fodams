@@ -1,3 +1,7 @@
+domain {
+    all;
+}
+
 qualityAttributes {
     quality QualityAttributes;
     quality Performance;
@@ -20,10 +24,14 @@ constraints {
 }
 
 tradeOffs {
-    Security increases Availability strength strong;
-    Performance increases Latency strength medium;
+    Security increases Availability {
+        strength = high;
+    }
+    Performance increases Latency {
+        strength = medium;
+    }
 }
 
 configuration {
-    priorityGroup { QualityAttributes; Security; Performance; Availability; }
+    priority High { QualityAttributes; Security; Performance; Availability; }
 }

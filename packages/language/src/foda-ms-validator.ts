@@ -288,9 +288,9 @@ function collectTreeAnalysis(tree: FeatureTree): TreeAnalysisContext {
 
 function tradeOffWeight(strength: TradeOffStrength | undefined): number {
   switch (strength) {
-    case "weak":
+    case "low":
       return 1;
-    case "strong":
+    case "high":
       return 3;
     case "medium":
     default:
