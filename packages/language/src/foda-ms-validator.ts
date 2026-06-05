@@ -60,6 +60,7 @@ interface GroupConstraint {
 interface TreeAnalysisContext {
   nodesByFeature: Map<string, FeatureNode[]>;
   parentByChild: Map<string, Set<string>>;
+  ancestorsByChild: Map<string, Set<string>>;
   mandatoryEdges: Array<{ parent: string; child: string; node: AstNode }>;
   orGroups: GroupConstraint[];
   alternativeGroups: GroupConstraint[];
@@ -146,6 +147,7 @@ function collectTreeAnalysis(tree: FeatureTree): TreeAnalysisContext {
   const context: TreeAnalysisContext = {
     nodesByFeature: new Map<string, FeatureNode[]>(),
     parentByChild: new Map<string, Set<string>>(),
+    ancestorsByChild: new Map<string, Set<string>>(),
     mandatoryEdges: [],
     orGroups: [],
     alternativeGroups: [],
@@ -283,6 +285,25 @@ function collectTreeAnalysis(tree: FeatureTree): TreeAnalysisContext {
     }
   }
 
+  // Compute transitive ancestors for each feature.
+  for (const feature of context.nodesByFeature.keys()) {
+    const ancestors = new Set<string>();
+    const stack = [feature];
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      const parents = context.parentByChild.get(current);
+      if (parents) {
+        for (const parent of parents) {
+          if (!ancestors.has(parent)) {
+            ancestors.add(parent);
+            stack.push(parent);
+          }
+        }
+      }
+    }
+    context.ancestorsByChild.set(feature, ancestors);
+  }
+
   return context;
 }
 
@@ -295,6 +316,18 @@ function tradeOffWeight(strength: TradeOffStrength | undefined): number {
     case "medium":
     default:
       return 2;
+  }
+}
+
+function tradeOffSeverity(strength: TradeOffStrength | undefined): FindingSeverity {
+  switch (strength) {
+    case "high":
+      return "error";
+    case "low":
+      return "info";
+    case "medium":
+    default:
+      return "warning";
   }
 }
 
@@ -369,25 +402,7 @@ function evaluateTradeOffRelation(
     };
   }
 
-  if (!rightSelected) {
-    return undefined;
-  }
-
-  if (
-    leftGroup !== undefined &&
-    rightGroup !== undefined &&
-    leftGroup < rightGroup
-  ) {
-    return {
-      weight,
-      value: weight,
-    };
-  }
-  return {
-    weight,
-    value: -weight,
-    warningMessage: `Trade-off warning: '${left}' must be in a higher-priority group than '${right}'.`,
-  };
+  return undefined;
 }
 
 function collectStaticFindings(
@@ -677,10 +692,66 @@ function evaluateConfiguration(
 
     if (evaluated.warningMessage) {
       findings.push({
-        severity: "warning",
+        severity: tradeOffSeverity(relation.strength),
         message: evaluated.warningMessage,
         node: relation,
       });
+    }
+  }
+
+  // Inherited tradeoff validation: child nodes must satisfy ancestor tradeoffs.
+  for (const selectedName of selectedSet) {
+    const ancestors = treeContext.ancestorsByChild.get(selectedName);
+    if (!ancestors || ancestors.size === 0) {
+      continue;
+    }
+
+    const descendantGroup = priorityGroupByFeature.get(selectedName);
+    if (descendantGroup === undefined) {
+      continue;
+    }
+
+    for (const ancestor of ancestors) {
+      if (ancestor === selectedName) {
+        continue;
+      }
+
+      for (const relation of model.tradeOffs.relations) {
+        const left = relation.left.ref?.name;
+        const right = relation.right.ref?.name;
+        if (!left || !right || left !== ancestor) {
+          continue;
+        }
+
+        if (relation.relation !== "increases" && relation.relation !== "reduces") {
+          continue;
+        }
+
+        if (!tradeOffAppliesToDomain(relation, configDomain)) {
+          continue;
+        }
+
+        if (!selectedSet.has(right)) {
+          continue;
+        }
+
+        if (right === selectedName) {
+          continue;
+        }
+
+        const rightGroup = priorityGroupByFeature.get(right);
+        if (rightGroup === undefined) {
+          continue;
+        }
+
+        if (descendantGroup === rightGroup) {
+          findings.push({
+            severity: tradeOffSeverity(relation.strength),
+            message: `Trade-off warning: '${selectedName}' (descendant of '${ancestor}') and '${right}' are in the same priority group, but '${ancestor}' ${relation.relation} '${right}'. Consider adjusting priority groups.`,
+            node: relation,
+          });
+        }
+      }
     }
   }
 

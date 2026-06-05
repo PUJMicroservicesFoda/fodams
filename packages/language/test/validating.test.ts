@@ -3,6 +3,7 @@ import { EmptyFileSystem, type LangiumDocument } from "langium";
 import { expandToString as s } from "langium/generate";
 import { parseHelper } from "langium/test";
 import type { Diagnostic } from "vscode-languageserver-types";
+import { DiagnosticSeverity } from "vscode-languageserver-types";
 import type { Model } from "foda-ms-language";
 import { analyzeModel, createFodaMsServices, findingSeverityLabel, formatAnalysisFinding, isModel } from "foda-ms-language";
 
@@ -159,44 +160,6 @@ describe('Validating', () => {
         expect(analysis.maxValidConfigurations).toBe(0);
     });
 
-    test('check moreImportantThan priority ordering', async () => {
-        document = await parse(`
-            domain {
-                all;
-            }
-
-            qualityAttributes {
-                quality QualityAttributes;
-                quality Performance;
-            }
-
-            featureTree QualityAttributes {
-                optional Performance;
-            };
-
-            constraints {
-            }
-
-            tradeOffs {
-                Performance moreImportantThan QualityAttributes {
-                    strength = high;
-                }
-            }
-
-            configuration {
-                priority Low { QualityAttributes; }
-                priority High { Performance; }
-            }
-        `);
-
-        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
-        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Performance' must be in a higher-priority group than 'QualityAttributes'."));
-
-        const analysis = analyzeModel(document!.parseResult.value);
-        expect(analysis.maxValidConfigurations).toBe(6);
-        expect(analysis.totalCombinations).toBe(9);
-    });
-
     test('warn when reduces pair is in same priority group', async () => {
         document = await parse(`
             domain {
@@ -229,6 +192,273 @@ describe('Validating', () => {
 
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Consistency' reduces 'Availability', but both are in the same priority group. Consider putting them in different priority groups."));
+    });
+
+    test('strength high yields error severity', async () => {
+        document = await parse(`
+            domain {
+                all;
+            }
+
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Security;
+                quality Performance;
+            }
+
+            featureTree QualityAttributes {
+                optional Security;
+                optional Performance;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Security reduces Performance {
+                    strength = high;
+                }
+            }
+
+            configuration {
+                priority High { QualityAttributes; Security; Performance; }
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Security' reduces 'Performance'"));
+        expect(document?.diagnostics?.[0]?.severity).toBe(DiagnosticSeverity.Error);
+    });
+
+    test('strength low yields info severity', async () => {
+        document = await parse(`
+            domain {
+                all;
+            }
+
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Security;
+                quality Performance;
+            }
+
+            featureTree QualityAttributes {
+                optional Security;
+                optional Performance;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Security reduces Performance {
+                    strength = low;
+                }
+            }
+
+            configuration {
+                priority High { QualityAttributes; Security; Performance; }
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Security' reduces 'Performance'"));
+        expect(document?.diagnostics?.[0]?.severity).toBe(DiagnosticSeverity.Information);
+    });
+
+    test('child inherits ancestor reduces tradeoff warning', async () => {
+        document = await parse(`
+            domain {
+                all;
+            }
+
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance;
+                quality Latency;
+                quality Security;
+            }
+
+            featureTree QualityAttributes {
+                optional Performance {
+                    optional Latency;
+                };
+                optional Security;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Performance reduces Security {
+                }
+            }
+
+            configuration {
+                priority High { QualityAttributes; Latency; Security; }
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Latency' (descendant of 'Performance') and 'Security' are in the same priority group, but 'Performance' reduces 'Security'. Consider adjusting priority groups."));
+    });
+
+    test('child inherits ancestor increases tradeoff warning', async () => {
+        document = await parse(`
+            domain {
+                all;
+            }
+
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance;
+                quality Latency;
+                quality Throughput;
+            }
+
+            featureTree QualityAttributes {
+                optional Performance {
+                    optional Latency;
+                };
+                optional Throughput;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Performance increases Throughput {
+                }
+            }
+
+            configuration {
+                priority High { QualityAttributes; Latency; Throughput; }
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Latency' (descendant of 'Performance') and 'Throughput' are in the same priority group, but 'Performance' increases 'Throughput'. Consider adjusting priority groups."));
+    });
+
+    test('inherited tradeoff uses ancestor strength severity', async () => {
+        document = await parse(`
+            domain {
+                all;
+            }
+
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance;
+                quality Latency;
+                quality Security;
+            }
+
+            featureTree QualityAttributes {
+                optional Performance {
+                    optional Latency;
+                };
+                optional Security;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Performance reduces Security {
+                    strength = high;
+                }
+            }
+
+            configuration {
+                priority High { QualityAttributes; Performance; Latency; Security; }
+            }
+        `);
+
+        // The direct tradeoff (Performance reduces Security) will be a warning,
+        // but the inherited check uses the ancestor's strength=high → error.
+        const tradeoffDiagnostics = document?.diagnostics?.filter(
+            d => d.message.includes("descendant of 'Performance'")
+        );
+        expect(tradeoffDiagnostics?.length).toBeGreaterThan(0);
+        expect(tradeoffDiagnostics?.[0]?.severity).toBe(DiagnosticSeverity.Error);
+    });
+
+    test('transitive inheritance: grandchild inherits grandparent tradeoff', async () => {
+        document = await parse(`
+            domain {
+                all;
+            }
+
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance;
+                quality Latency;
+                quality TailLatency;
+                quality Availability;
+            }
+
+            featureTree QualityAttributes {
+                optional Performance {
+                    optional Latency {
+                        optional TailLatency;
+                    };
+                };
+                optional Availability;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Performance reduces Availability {
+                }
+            }
+
+            configuration {
+                priority High { QualityAttributes; TailLatency; Availability; }
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'TailLatency' (descendant of 'Performance') and 'Availability' are in the same priority group, but 'Performance' reduces 'Availability'. Consider adjusting priority groups."));
+    });
+
+    test('no inherited warning when descendant is in different group', async () => {
+        document = await parse(`
+            domain {
+                all;
+            }
+
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance;
+                quality Latency;
+                quality Security;
+            }
+
+            featureTree QualityAttributes {
+                optional Performance {
+                    optional Latency;
+                };
+                optional Security;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Performance reduces Security {
+                }
+            }
+
+            configuration {
+                priority High { QualityAttributes; Latency; }
+                priority Low { Security; }
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).not.toEqual(expect.stringContaining("descendant of 'Performance'"));
     });
 
     test('format findings with VS Code severity labels', () => {

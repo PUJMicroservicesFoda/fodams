@@ -68,7 +68,6 @@ tradeOffs {
     Latency increases Consistency;
     Performance increases Scalability;
     Availability increases HighEnergyConsumption;
-    Security moreImportantThan LowCoupling;
 }
 
 configuration {

@@ -63,9 +63,6 @@ describe('Parsing tests', () => {
                 Throughput reduces Latency {
                     strength = medium;
                 }
-                Performance moreImportantThan Latency {
-                    strength = medium;
-                }
             }
 
             configuration {
@@ -108,8 +105,7 @@ describe('Parsing tests', () => {
                 expect(model.tradeOffs.relations.map(r => `${r.left.$refText} ${r.relation} ${r.right.$refText} (${r.strength ?? 'medium'})`)).toEqual([
                     'Performance increases Throughput (low)',
                     'FineGranularity reduces Performance (high)',
-                    'Throughput reduces Latency (medium)',
-                    'Performance moreImportantThan Latency (medium)'
+                    'Throughput reduces Latency (medium)'
                 ]);
     });
 });

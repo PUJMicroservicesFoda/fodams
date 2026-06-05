@@ -83,7 +83,7 @@ EvidenceRef:
     name=ID;
 
 TradeOffKind returns string:
-    'increases' | 'reduces' | 'moreImportantThan';
+    'increases' | 'reduces';
 
 TradeOffStrength returns string:
     'low' | 'medium' | 'high';
