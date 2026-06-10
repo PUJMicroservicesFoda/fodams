@@ -339,12 +339,37 @@ function tradeOffAppliesToDomain(
   if (relation.domainValue.length === 0) {
     return true;
   }
+  // If the domain list includes "all", the trade-off applies to every domain.
+  if (relation.domainValue.includes("all")) {
+    return true;
+  }
   // If no domain is selected in the configuration, all trade-offs apply.
   if (configDomain === undefined) {
     return true;
   }
   // Trade-off applies only if its domain list includes the config's domain.
   return relation.domainValue.includes(configDomain);
+}
+
+function sameGroupWarningApplies(
+  relation: TradeOffRelation,
+  samePriorityGroup: boolean,
+): boolean {
+  if (!samePriorityGroup) {
+    return false;
+  }
+  const leftDirection = relation.left.ref?.direction?.kind;
+  const rightDirection = relation.right.ref?.direction?.kind;
+  // If either direction is missing, keep existing behavior (always warn).
+  if (!leftDirection || !rightDirection) {
+    return true;
+  }
+  if (relation.relation === "increases") {
+    // Synergy when both have same direction — suppress warning.
+    return leftDirection !== rightDirection;
+  }
+  // reduces: conflict when same direction — keep warning.
+  return leftDirection === rightDirection;
 }
 
 function evaluateTradeOffRelation(
@@ -381,7 +406,7 @@ function evaluateTradeOffRelation(
   }
 
   if (relation.relation === "increases") {
-    const warningMessage = samePriorityGroup
+    const warningMessage = sameGroupWarningApplies(relation, samePriorityGroup)
       ? `Trade-off warning: '${left}' increases '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
       : undefined;
     return {
@@ -392,7 +417,7 @@ function evaluateTradeOffRelation(
   }
 
   if (relation.relation === "reduces") {
-    const warningMessage = samePriorityGroup
+    const warningMessage = sameGroupWarningApplies(relation, samePriorityGroup)
       ? `Trade-off warning: '${left}' reduces '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
       : undefined;
     return {
@@ -745,11 +770,25 @@ function evaluateConfiguration(
         }
 
         if (descendantGroup === rightGroup) {
-          findings.push({
-            severity: tradeOffSeverity(relation.strength),
-            message: `Trade-off warning: '${selectedName}' (descendant of '${ancestor}') and '${right}' are in the same priority group, but '${ancestor}' ${relation.relation} '${right}'. Consider adjusting priority groups.`,
-            node: relation,
-          });
+          const leftDecl = relation.left.ref;
+          const rightDecl = relation.right.ref;
+          const leftDir = leftDecl?.direction?.kind;
+          const rightDir = rightDecl?.direction?.kind;
+          let shouldWarn = true;
+          if (leftDir && rightDir) {
+            if (relation.relation === "increases") {
+              shouldWarn = leftDir !== rightDir;
+            } else {
+              shouldWarn = leftDir === rightDir;
+            }
+          }
+          if (shouldWarn) {
+            findings.push({
+              severity: tradeOffSeverity(relation.strength),
+              message: `Trade-off warning: '${selectedName}' (descendant of '${ancestor}') and '${right}' are in the same priority group, but '${ancestor}' ${relation.relation} '${right}'. Consider adjusting priority groups.`,
+              node: relation,
+            });
+          }
         }
       }
     }

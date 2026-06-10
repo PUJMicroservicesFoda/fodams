@@ -22,7 +22,13 @@ QualityAttributesSection:
     '}';
 
 QualityAttributeDeclaration:
-    'quality' name=ID ';';
+    'quality' name=ID (direction=Direction)? ';';
+
+Direction:
+    kind=DirectionKind 'is' 'better';
+
+DirectionKind returns string:
+    'higher' | 'lower';
 
 FeatureTree:
     'featureTree' root=ID '{' relations+=ChildRelation* '}' ';'?;

@@ -639,6 +639,184 @@ describe('Validating', () => {
         // No domain selected in config → all trade-offs apply.
         expect(analysis.activeTradeOffs).toBe(2);
     });
+
+    test('domain filtering: domain=all acts as wildcard for any config domain', async () => {
+        document = await parse(`
+            domain {
+                IoT;
+                batch;
+                e-commerce;
+            }
+
+            qualityAttributes {
+                quality A;
+                quality B;
+                quality C;
+            }
+
+            featureTree QualityAttributes {
+                optional A;
+                optional B;
+                optional C;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                A increases B {
+                    domain = all;
+                    strength = high;
+                }
+                A reduces C {
+                    domain = batch;
+                    strength = high;
+                }
+            }
+
+            configuration {
+                domain = IoT;
+                priority High { A; B; C; }
+            }
+        `);
+
+        const analysis = analyzeModel(document!.parseResult.value);
+        // Both should be active: domain=all wildcard matches IoT, batch tradeoff excluded.
+        expect(analysis.activeTradeOffs).toBe(1);
+    });
+
+    test('domain=all wildcard yields error when both features in same group', async () => {
+        document = await parse(`
+            domain {
+                IoT;
+                batch;
+            }
+
+            qualityAttributes {
+                quality Consistency;
+                quality Availability;
+            }
+
+            featureTree QualityAttributes {
+                optional Consistency;
+                optional Availability;
+            };
+
+            constraints {
+            }
+
+            tradeOffs {
+                Consistency reduces Availability {
+                    domain = all;
+                    strength = high;
+                }
+            }
+
+            configuration {
+                domain = IoT;
+                priority High { Consistency; Availability; }
+            }
+        `);
+
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Trade-off warning: 'Consistency' reduces 'Availability'"));
+        expect(document?.diagnostics?.[0]?.severity).toBe(DiagnosticSeverity.Error);
+    });
+
+    test('direction: increases with same direction suppresses same-group warning', async () => {
+        document = await parse(`
+            domain { all; }
+            qualityAttributes {
+                quality Consistency higher is better;
+                quality Availability higher is better;
+            }
+            featureTree QualityAttributes {
+                optional Consistency;
+                optional Availability;
+            };
+            constraints { }
+            tradeOffs { Consistency increases Availability { } }
+            configuration { priority High { Consistency; Availability; } }
+        `);
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).not.toEqual(expect.stringContaining("same priority group"));
+    });
+
+    test('direction: increases with opposite direction keeps same-group warning', async () => {
+        document = await parse(`
+            domain { all; }
+            qualityAttributes {
+                quality Performance higher is better;
+                quality Latency lower is better;
+            }
+            featureTree QualityAttributes {
+                optional Performance;
+                optional Latency;
+            };
+            constraints { }
+            tradeOffs { Performance increases Latency { } }
+            configuration { priority High { Performance; Latency; } }
+        `);
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("same priority group"));
+    });
+
+    test('direction: reduces with same direction keeps same-group warning', async () => {
+        document = await parse(`
+            domain { all; }
+            qualityAttributes {
+                quality Consistency higher is better;
+                quality Availability higher is better;
+            }
+            featureTree QualityAttributes {
+                optional Consistency;
+                optional Availability;
+            };
+            constraints { }
+            tradeOffs { Consistency reduces Availability { } }
+            configuration { priority High { Consistency; Availability; } }
+        `);
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("same priority group"));
+    });
+
+    test('direction: reduces with opposite direction suppresses same-group warning', async () => {
+        document = await parse(`
+            domain { all; }
+            qualityAttributes {
+                quality Security higher is better;
+                quality EnergyConsumption lower is better;
+            }
+            featureTree QualityAttributes {
+                optional Security;
+                optional EnergyConsumption;
+            };
+            constraints { }
+            tradeOffs { Security reduces EnergyConsumption { } }
+            configuration { priority High { Security; EnergyConsumption; } }
+        `);
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).not.toEqual(expect.stringContaining("same priority group"));
+    });
+
+    test('direction: missing direction defaults to warning', async () => {
+        document = await parse(`
+            domain { all; }
+            qualityAttributes {
+                quality Consistency higher is better;
+                quality Availability;
+            }
+            featureTree QualityAttributes {
+                optional Consistency;
+                optional Availability;
+            };
+            constraints { }
+            tradeOffs { Consistency reduces Availability { } }
+            configuration { priority High { Consistency; Availability; } }
+        `);
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("same priority group"));
+    });
 });
 
 function checkDocumentValid(document: LangiumDocument): string | undefined {
