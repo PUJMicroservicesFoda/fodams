@@ -130,13 +130,13 @@ tradeOffs {
   // ─── Granularity / Coupling ───────────────────────────────────────────────
 
   Granularity reduces Performance {
-    domain = e-commerce, web, reactive;
+    domain = [e-commerce, web, reactive];
     strength = high;
     evidence = [shadijamicroservices2017, rosacharm2023, bentocost-availability2023];
   }
 
   Granularity increases Complexity {
-    domain = e-commerce, web, reactive;
+    domain = [e-commerce, web, reactive];
     strength = medium;
     evidence = [shadijamicroservices2017, rosacharm2023, bentocost-availability2023];
   }
@@ -154,7 +154,7 @@ tradeOffs {
   }
 
   Coupling reduces Performance {
-    domain = e-commerce, web, reactive;
+    domain = [e-commerce, web, reactive];
     strength = high;
     evidence = [rosacharm2023];
   }
@@ -182,25 +182,25 @@ tradeOffs {
   // ─── Security ────────────────────────────────────────────────────────────
 
   Security reduces Performance {
-    domain = web, IoT, reactive;
+    domain = [web, IoT, reactive];
     strength = high;
     evidence = [bermbachquality2017, rezaeinasabempirical2023, valedesigning2022];
   }
 
   Security reduces Scalability {
-    domain = web, IoT;
+    domain = [web, IoT];
     strength = medium;
     evidence = [rezaeinasabempirical2023];
   }
 
   Security increases Complexity {
-    domain = web, IoT, reactive;
+    domain = [web, IoT, reactive];
     strength = medium;
     evidence = [rezaeinasabempirical2023, valedesigning2022];
   }
 
   Security increases Coupling {
-    domain = web, IoT;
+    domain = [web, IoT];
     strength = medium;
     evidence = [rezaeinasabempirical2023];
   }
@@ -208,7 +208,7 @@ tradeOffs {
   // ─── Reliability / Availability ───────────────────────────────────────────
 
   Availability increases EnergyConsumption {
-    domain = IoT, CPS;
+    domain = [IoT, CPS];
     strength = high;
     evidence = [pincirolimodular2023, araujoenergy2024];
   }
@@ -226,7 +226,7 @@ tradeOffs {
   }
 
   Reliability increases EnergyConsumption {
-    domain = IoT, CPS;
+    domain = [IoT, CPS];
     strength = high;
     evidence = [pincirolimodular2023, araujoenergy2024];
   }
@@ -240,7 +240,7 @@ tradeOffs {
   // ─── Performance / Scalability / Energy ──────────────────────────────────
 
   Performance increases EnergyConsumption {
-    domain = IoT, CPS, batch;
+    domain = [IoT, CPS, batch];
     strength = high;
     evidence = [dingaempirical2023, pincirolimodular2023, araujoenergy2024];
   }
@@ -252,19 +252,19 @@ tradeOffs {
   }
 
   Scalability increases EnergyConsumption {
-    domain = IoT, CPS, batch;
+    domain = [IoT, CPS, batch];
     strength = high;
     evidence = [araujoenergy2024, pincirolimodular2023];
   }
 
   Elasticity increases EnergyConsumption {
-    domain = IoT, CPS, batch;
+    domain = [IoT, CPS, batch];
     strength = medium;
     evidence = [araujoenergy2024, dingaempirical2023];
   }
 
   Scalability increases ExecutionCost {
-    domain = web, e-commerce, batch;
+    domain = [web, e-commerce, batch];
     strength = high;
     evidence = [bentocost-availability2023, kalskechallenges2018, cojocaruattributes2019];
   }

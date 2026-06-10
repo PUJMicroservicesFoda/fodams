@@ -77,9 +77,9 @@ TradeOffRelation:
     right=[QualityAttributeDeclaration:ID]
     (
         '{'
-            ('domain' '=' domainValue+=ID (',' domainValue+=ID)* ';')?
+            ('domain' '=' ('[' domainValue+=ID (',' domainValue+=ID)* ']' | domainValue+=ID) ';')?
             ('strength' '=' strength=TradeOffStrength ';')?
-            ('evidence' '=' '[' (evidence+=EvidenceRef (',' evidence+=EvidenceRef)*)? ']' ';')?
+            ('evidence' '=' ('[' (evidence+=EvidenceRef (',' evidence+=EvidenceRef)*)? ']' | evidence+=EvidenceRef) ';')?
         '}'
     |
         ';'
