@@ -112,8 +112,10 @@ constraints {
   // CAP theorem: given PartitionTolerance is mandatory in
   // distributed microservices, Consistency and Availability
   // are mutually exclusive at their maximum levels.
-  Consistency excludes Availability;
-  // evidence = [gilbertbrewers2002, rossiconsistency2019, bermbachquality2017];
+  Consistency excludes Availability {
+      domain = all;
+      evidence = [gilbertbrewers2002, rossiconsistency2019, abadiconsistency2012];
+  }
   
 }
 
@@ -287,7 +289,7 @@ tradeOffs {
 
 configuration {
     domain = IoT;
-    priority High {
+    priority Highest {
         FunctionalSuitability;
 
         Confidentiality;
@@ -318,9 +320,10 @@ configuration {
         Portability;
         Security;
         Adaptability;
+        Granularity;
     }
 
-    priority Medium {
+    priority High {
         Availability;
         Scalability;
         Performance;
@@ -328,15 +331,18 @@ configuration {
 
     }
 
-    priority Low {
-        Granularity;
-        Complexity;
+    priority Medium {
         EnergyConsumption;
+        SingleUnitDeployment;
+    }
+
+    priority Low {
+        Coupling;
     }
 
     priority Negligible {
-        Coupling;
-        SingleUnitDeployment;
+        Complexity;
+
     }
 
 

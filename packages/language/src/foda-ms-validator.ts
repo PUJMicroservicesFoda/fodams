@@ -332,7 +332,7 @@ function tradeOffSeverity(strength: TradeOffStrength | undefined): FindingSeveri
 }
 
 function tradeOffAppliesToDomain(
-  relation: TradeOffRelation,
+  relation: { domainValue: string[] },
   configDomain: string | undefined,
 ): boolean {
   // If the trade-off has no domain restrictions, it applies universally.
@@ -352,7 +352,7 @@ function tradeOffAppliesToDomain(
 }
 
 function sameGroupWarningApplies(
-  relation: TradeOffRelation,
+  relation: TradeOffRelation & { left: { ref?: { direction?: { kind?: string } } } },
   samePriorityGroup: boolean,
 ): boolean {
   if (!samePriorityGroup) {
@@ -657,10 +657,15 @@ function evaluateConfiguration(
     }
   }
 
+  const configDomain = model.configuration.domainSelection?.ref?.name;
+
   for (const constraint of model.hardConstraints.constraints) {
     const left = constraint.left.ref?.name;
     const right = constraint.right.ref?.name;
     if (!left || !right) {
+      continue;
+    }
+    if (!tradeOffAppliesToDomain(constraint, configDomain)) {
       continue;
     }
     if (
@@ -688,8 +693,6 @@ function evaluateConfiguration(
       });
     }
   }
-
-  const configDomain = model.configuration.domainSelection?.ref?.name;
 
   let minScore = 0;
   let maxScore = 0;

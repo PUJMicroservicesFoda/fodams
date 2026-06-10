@@ -142,8 +142,21 @@ export class FodaMsFormatter extends AbstractFormatter {
 
         if (isHardConstraint(node)) {
             const formatter = this.getNodeFormatter(node);
+            formatter.properties('left', 'right').append(Formatting.oneSpace());
             formatter.property('relation').surround(Formatting.oneSpace());
-            formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
+
+            const hasBody = node.domainValue.length > 0 || node.evidence.length > 0;
+
+            if (hasBody) {
+                const open = formatter.keyword('{');
+                const close = formatter.keyword('}');
+                open.prepend(Formatting.oneSpace()).append(Formatting.newLine());
+                close.prepend(Formatting.newLine()).append(Formatting.newLine());
+
+                formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
+            } else {
+                formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
+            }
             return;
         }
 

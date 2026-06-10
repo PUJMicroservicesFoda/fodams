@@ -61,7 +61,14 @@ HardConstraint:
     left=[QualityAttributeDeclaration:ID]
     relation=HardConstraintKind
     right=[QualityAttributeDeclaration:ID]
-    ';';
+    (
+        '{'
+            ('domain' '=' ('[' domainValue+=ID (',' domainValue+=ID)* ']' | domainValue+=ID) ';')?
+            ('evidence' '=' ('[' (evidence+=EvidenceRef (',' evidence+=EvidenceRef)*)? ']' | evidence+=EvidenceRef) ';')?
+        '}'
+    |
+        ';'
+    );
 
 HardConstraintKind returns string:
     'requires' | 'excludes';
