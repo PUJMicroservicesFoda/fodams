@@ -117,10 +117,21 @@ export function analyzeModel(model: Model): AnalysisResult {
     }
   }
 
+  // Expand selected set with implicit ancestors in the feature tree.
+  const expandedSet = new Set(selectedSet);
+  for (const feature of selectedSet) {
+    const ancestors = treeContext.ancestorsByChild.get(feature);
+    if (ancestors) {
+      for (const ancestor of ancestors) {
+        expandedSet.add(ancestor);
+      }
+    }
+  }
+
   const configurationResult = evaluateConfiguration(
     model,
     treeContext,
-    selectedSet,
+    expandedSet,
     priorityGroupByFeature,
   );
   findings.push(...configurationResult.findings);
@@ -596,22 +607,6 @@ function evaluateConfiguration(
 
   const selectedForTreeRules = new Set(selectedSet);
   selectedForTreeRules.add(model.tree.root);
-
-  for (const [child, parents] of treeContext.parentByChild.entries()) {
-    if (selectedSet.has(child)) {
-      const hasSelectedParent = [...parents].some((parent) =>
-        selectedForTreeRules.has(parent),
-      );
-      if (!hasSelectedParent) {
-        findings.push({
-          severity: "error",
-          message: `Feature '${child}' is selected but none of its parents are selected.`,
-          node: treeContext.nodesByFeature.get(child)?.[0] ?? model.tree,
-          property: "feature",
-        });
-      }
-    }
-  }
 
   for (const edge of treeContext.mandatoryEdges) {
     if (
