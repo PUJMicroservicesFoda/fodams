@@ -14,18 +14,17 @@ qualityAttributes {
     quality FunctionalSuitability higher is better;
     quality Consistency higher is better;
     quality Granularity;
-    quality CoarseGranularity;
-    quality FineGranularity;
 
     quality Security higher is better;
     quality Confidentiality higher is better;
     quality Integrity higher is better;
     quality Authenticity higher is better;
 
-    quality Performance higher is better;
+    quality PerformanceEfficiency higher is better;
+    quality TimeBehavior;
     quality Latency lower is better;
     quality Throughput higher is better;
-    quality ResourceUtilization lower is better;
+    quality ResourceUtilization; 
     quality Elasticity higher is better;
     quality Scalability higher is better;
     quality ExecutionCost lower is better;
@@ -45,12 +44,11 @@ qualityAttributes {
     quality Reusability higher is better;
     quality Testability higher is better;
     quality Deployability higher is better;
-    quality SingleUnitDeployment;
-    quality MultipleUnitDeployment;
     quality Extensibility higher is better;
     quality Sustainability higher is better;
     quality EnergyConsumption lower is better;
     quality Flexibility higher is better;
+    quality Modularity higher is better;
 
     quality Portability higher is better;
     quality Adaptability higher is better;
@@ -59,27 +57,24 @@ qualityAttributes {
 featureTree QualityAttributes {
     mandatory FunctionalSuitability {
         optional Consistency;
-        mandatory Granularity;
+        optional Granularity;
     };
 
-    optional Security {
-        optional Confidentiality;
-        optional Integrity;
-        optional Authenticity;
-    };
-
-    optional Performance {
-        optional Latency;
-        optional Throughput;
+    optional PerformanceEfficiency {
+        optional TimeBehavior {
+          optional Latency;
+          optional Throughput;
+        };
         optional ResourceUtilization;
         optional Elasticity;
         optional Scalability;
         optional ExecutionCost;
     };
 
+
     optional Compatibility {
-        optional Coupling;
         optional Interoperability;
+        optional Coupling;
     };
 
     optional Reliability {
@@ -89,18 +84,23 @@ featureTree QualityAttributes {
         optional Resiliency;
     };
 
+    optional Security {
+        optional Confidentiality;
+        optional Integrity;
+        optional Authenticity;
+    };
+
     optional Maintainability {
         optional Complexity;
         optional Reusability;
         optional Testability;
-        optional Deployability {
-            alternative { SingleUnitDeployment, MultipleUnitDeployment };
-        };
+        optional Deployability;
         optional Extensibility;
         optional Sustainability {
             optional EnergyConsumption;
         };
         optional Flexibility;
+        optional Modularity;
     };
 
     optional Portability {
@@ -131,7 +131,7 @@ tradeOffs {
 
   // ─── Granularity / Coupling ───────────────────────────────────────────────
 
-  Granularity reduces Performance {
+  Granularity reduces PerformanceEfficiency {
     domain = [e-commerce, web, reactive];
     strength = high;
     evidence = [shadijamicroservices2017, rosacharm2023, bentocost-availability2023];
@@ -146,16 +146,16 @@ tradeOffs {
   Granularity reduces Coupling {
     domain = all;
     strength = high;
-    evidence = [rosacharm2023, bentocost-availability2023];
+    evidence = [rosacharm2023];
   }
 
   Granularity reduces Consistency {
     domain = all;
     strength = high;
-    evidence = [rosacharm2023];
+    evidence = [rosacharm2023, rossi_consistency_2019, de_lauretis_monolithic_2019];
   }
 
-  Coupling reduces Performance {
+  Coupling reduces PerformanceEfficiency {
     domain = [e-commerce, web, reactive];
     strength = high;
     evidence = [rosacharm2023];
@@ -167,26 +167,12 @@ tradeOffs {
     evidence = [rosacharm2023, bentocost-availability2023];
   }
 
-  // ─── Deployment strategy ─────────────────────────────────────────────────
-
-  SingleUnitDeployment reduces Granularity {
-    domain = all;
-    strength = high;
-    evidence = [blinowskimonolithic2022, avritzerquantitative2018];
-  }
-
-  SingleUnitDeployment reduces Scalability {
-    domain = all;
-    strength = high;
-    evidence = [blinowskimonolithic2022, bucchiaronemonolithic2018];
-  }
-
   // ─── Security ────────────────────────────────────────────────────────────
 
-  Security reduces Performance {
+  Security reduces PerformanceEfficiency {
     domain = [web, IoT, reactive];
     strength = high;
-    evidence = [bermbachquality2017, rezaeinasabempirical2023, valedesigning2022];
+    evidence = [bermbachquality2017, rezaeinasabempirical2023];
   }
 
   Security reduces Scalability {
@@ -224,7 +210,7 @@ tradeOffs {
   Availability increases Scalability {
     domain = all;
     strength = medium;
-    evidence = [bentocost-availability2023, blinowskimonolithic2022];
+    evidence = [bentocost-availability2023];
   }
 
   Reliability increases EnergyConsumption {
@@ -234,20 +220,20 @@ tradeOffs {
   }
 
   Reliability increases Coupling {
-    domain = all;
+    domain = IoT;
     strength = medium;
     evidence = [rosacharm2023, moghaddamfault-tolerant2019];
   }
 
   // ─── Performance / Scalability / Energy ──────────────────────────────────
 
-  Performance increases EnergyConsumption {
+  PerformanceEfficiency increases EnergyConsumption {
     domain = [IoT, CPS, batch];
     strength = high;
     evidence = [dingaempirical2023, pincirolimodular2023, araujoenergy2024];
   }
 
-  Performance increases Complexity {
+  PerformanceEfficiency increases Complexity {
     domain = all;
     strength = medium;
     evidence = [avritzerquantitative2018, bermbachquality2017];
@@ -282,68 +268,82 @@ tradeOffs {
   Deployability increases Complexity {
     domain = all;
     strength = medium;
-    evidence = [bucchiaronemonolithic2018, waseemdecision2021];
+    evidence = [rosacharm2023];
   }
 
 }
 
+// configuration {
+//     domain = IoT;
+//     priority Highest {
+//         FunctionalSuitability;
+
+//         Confidentiality;
+//         Integrity;
+//         Authenticity;
+
+//         Throughput;
+//         ResourceUtilization;
+//         Elasticity;
+//         ExecutionCost;
+
+//         Compatibility;
+//         Interoperability;
+
+//         Reliability;
+//         FaultTolerance;
+//         Robustness;
+//         Resiliency;
+
+//         Maintainability;
+//         Reusability;
+//         Testability;
+//         Deployability;
+//         Extensibility;
+//         Sustainability;
+//         Flexibility;
+
+//         Portability;
+//         Security;
+//         Adaptability;
+//         Granularity;
+//     }
+
+//     priority High {
+//         Availability;
+//         Scalability;
+//         Performance;
+//         Latency;
+
+//     }
+
+//     priority Medium {
+//         EnergyConsumption;
+//         SingleUnitDeployment;
+//     }
+
+//     priority Low {
+//         Coupling;
+//     }
+
+//     priority Negligible {
+//         Complexity;
+
+//     }
+
+
+// }
 configuration {
     domain = IoT;
-    priority Highest {
-        FunctionalSuitability;
-
-        Confidentiality;
-        Integrity;
-        Authenticity;
-
-        Throughput;
-        ResourceUtilization;
-        Elasticity;
-        ExecutionCost;
-
-        Compatibility;
-        Interoperability;
-
-        Reliability;
-        FaultTolerance;
-        Robustness;
-        Resiliency;
-
-        Maintainability;
-        Reusability;
-        Testability;
-        Deployability;
-        Extensibility;
-        Sustainability;
-        Flexibility;
-
-        Portability;
-        Security;
-        Adaptability;
-        Granularity;
-    }
-
     priority High {
-        Availability;
-        Scalability;
-        Performance;
-        Latency;
-
+      FunctionalSuitability;
+      // Availability and Latency are potential conflicts, so they should be in a different priority groups
+      EnergyConsumption; 
+      Portability;
     }
-
     priority Medium {
-        EnergyConsumption;
-        SingleUnitDeployment;
+      Latency;
+      Availability; 
     }
-
-    priority Low {
-        Coupling;
-    }
-
-    priority Negligible {
-        Complexity;
-
-    }
-
-
+    priority Low { }
 }
