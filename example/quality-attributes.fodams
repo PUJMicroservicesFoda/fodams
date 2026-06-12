@@ -140,7 +140,7 @@ tradeOffs {
   Granularity increases Complexity {
     domain = [e-commerce, web, reactive];
     strength = medium;
-    evidence = [shadijamicroservices2017, rosacharm2023, bentocost-availability2023];
+    evidence = [rosacharm2023];
   }
 
   Granularity reduces Coupling {
@@ -271,6 +271,27 @@ tradeOffs {
     evidence = [rosacharm2023];
   }
 
+}
+
+evidences {
+    abadiconsistency2012;
+    araujoenergy2024;
+    avritzerquantitative2018;
+    bentocost-availability2023;
+    bermbachquality2017;
+    cojocaruattributes2019;
+    de_lauretis_monolithic_2019;
+    dingaempirical2023;
+    gilbertbrewers2002;
+    kalskechallenges2018;
+    moghaddamfault-tolerant2019;
+    pincirolimodular2023;
+    rezaeinasabempirical2023;
+    rosacharm2023;
+    rossi_consistency_2019;
+    rossiconsistency2019;
+    shadijamicroservices2017;
+    valedesigning2022;
 }
 
 // configuration {

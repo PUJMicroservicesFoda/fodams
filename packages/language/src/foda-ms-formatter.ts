@@ -4,6 +4,7 @@ import {
     isAlternativeRelation,
     isConfiguration,
     isDomainSection,
+    isEvidencesSection,
     isFeatureNode,
     isFeatureTree,
     isHardConstraint,
@@ -24,7 +25,7 @@ export class FodaMsFormatter extends AbstractFormatter {
     protected override format(node: AstNode): void {
         if (isModel(node)) {
             const formatter = this.getNodeFormatter(node);
-            formatter.properties('qualityAttributes', 'tree', 'hardConstraints', 'tradeOffs', 'configuration')
+            formatter.properties('qualityAttributes', 'tree', 'hardConstraints', 'tradeOffs', 'evidenceDeclarations', 'configuration')
                 .prepend(Formatting.noIndent())
                 .prepend(Formatting.newLine());
             return;
@@ -198,6 +199,18 @@ export class FodaMsFormatter extends AbstractFormatter {
             } else {
                 formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
             }
+            return;
+        }
+
+        if (isEvidencesSection(node)) {
+            const formatter = this.getNodeFormatter(node);
+            formatter.keyword('evidences').append(Formatting.oneSpace());
+            const open = formatter.keyword('{');
+            const close = formatter.keyword('}');
+            open.append(Formatting.newLine());
+            close.prepend(Formatting.newLine()).append(Formatting.newLine());
+            formatter.interior(open, close).prepend(Formatting.indent());
+            formatter.properties('declarations').prepend(Formatting.newLine());
             return;
         }
 

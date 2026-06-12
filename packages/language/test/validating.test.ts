@@ -643,6 +643,7 @@ describe('Validating', () => {
     test('domain filtering: domain=all acts as wildcard for any config domain', async () => {
         document = await parse(`
             domain {
+                all;
                 IoT;
                 batch;
                 e-commerce;
@@ -688,6 +689,7 @@ describe('Validating', () => {
     test('domain=all wildcard yields error when both features in same group', async () => {
         document = await parse(`
             domain {
+                all;
                 IoT;
                 batch;
             }

@@ -6,6 +6,7 @@ entry Model:
     tree=FeatureTree
     hardConstraints=HardConstraintSection
     tradeOffs=TradeOffSection
+    evidenceDeclarations=EvidencesSection?
     configuration=Configuration;
 
 DomainSection:
@@ -63,7 +64,7 @@ HardConstraint:
     right=[QualityAttributeDeclaration:ID]
     (
         '{'
-            ('domain' '=' ('[' domainValue+=ID (',' domainValue+=ID)* ']' | domainValue+=ID) ';')?
+            ('domain' '=' ('[' domainValue+=[DomainItem:ID] (',' domainValue+=[DomainItem:ID])* ']' | domainValue+=[DomainItem:ID]) ';')?
             ('evidence' '=' ('[' (evidence+=EvidenceRef (',' evidence+=EvidenceRef)*)? ']' | evidence+=EvidenceRef) ';')?
         '}'
     |
@@ -84,7 +85,7 @@ TradeOffRelation:
     right=[QualityAttributeDeclaration:ID]
     (
         '{'
-            ('domain' '=' ('[' domainValue+=ID (',' domainValue+=ID)* ']' | domainValue+=ID) ';')?
+            ('domain' '=' ('[' domainValue+=[DomainItem:ID] (',' domainValue+=[DomainItem:ID])* ']' | domainValue+=[DomainItem:ID]) ';')?
             ('strength' '=' strength=TradeOffStrength ';')?
             ('evidence' '=' ('[' (evidence+=EvidenceRef (',' evidence+=EvidenceRef)*)? ']' | evidence+=EvidenceRef) ';')?
         '}'
@@ -93,7 +94,15 @@ TradeOffRelation:
     );
 
 EvidenceRef:
-    name=ID;
+    evidence=[EvidencesDeclaration:ID];
+
+EvidencesSection:
+    'evidences' '{'
+        declarations+=EvidencesDeclaration*
+    '}';
+
+EvidencesDeclaration:
+    name=ID ';';
 
 TradeOffKind returns string:
     'increases' | 'reduces';

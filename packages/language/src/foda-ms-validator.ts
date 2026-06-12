@@ -343,15 +343,19 @@ function tradeOffSeverity(strength: TradeOffStrength | undefined): FindingSeveri
 }
 
 function tradeOffAppliesToDomain(
-  relation: { domainValue: string[] },
+  relation: { domainValue: Array<{ $refText: string; ref?: { name?: string } }> },
   configDomain: string | undefined,
 ): boolean {
   // If the trade-off has no domain restrictions, it applies universally.
   if (relation.domainValue.length === 0) {
     return true;
   }
+  // Extract reference text for matching.
+  const domainNames = relation.domainValue
+    .map((v) => v.$refText)
+    .filter((n): n is string => Boolean(n));
   // If the domain list includes "all", the trade-off applies to every domain.
-  if (relation.domainValue.includes("all")) {
+  if (domainNames.includes("all")) {
     return true;
   }
   // If no domain is selected in the configuration, all trade-offs apply.
@@ -359,7 +363,7 @@ function tradeOffAppliesToDomain(
     return true;
   }
   // Trade-off applies only if its domain list includes the config's domain.
-  return relation.domainValue.includes(configDomain);
+  return domainNames.includes(configDomain as string);
 }
 
 function sameGroupWarningApplies(

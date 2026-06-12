@@ -13,10 +13,17 @@ export class FodaMsScopeProvider extends DefaultScopeProvider {
             }
         }
 
-        if (context.property === 'domainSelection') {
+        if (context.property === 'domainSelection' || context.property === 'domainValue') {
             const model = getModelContainer(context.container);
             if (model) {
                 scope = this.createScopeForNodes(model.domain.domains, scope);
+            }
+        }
+
+        if (context.property === 'evidence') {
+            const model = getModelContainer(context.container);
+            if (model && model.evidenceDeclarations) {
+                scope = this.createScopeForNodes(model.evidenceDeclarations.declarations, scope);
             }
         }
 
