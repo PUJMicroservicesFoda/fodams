@@ -678,8 +678,8 @@ function evaluateConfiguration(
       findings.push({
         severity: "error",
         message: `Hard constraint violated: '${left}' requires '${right}'.`,
-        node: constraint,
-        property: "right",
+        node: config,
+        property: "priorityGroups",
       });
     }
     if (
@@ -690,8 +690,8 @@ function evaluateConfiguration(
       findings.push({
         severity: "error",
         message: `Hard constraint violated: '${left}' excludes '${right}'.`,
-        node: constraint,
-        property: "right",
+        node: config,
+        property: "priorityGroups",
       });
     }
   }
@@ -724,7 +724,8 @@ function evaluateConfiguration(
       findings.push({
         severity: tradeOffSeverity(relation.strength),
         message: evaluated.warningMessage,
-        node: relation,
+        node: config,
+        property: "priorityGroups",
       });
     }
   }
@@ -791,7 +792,8 @@ function evaluateConfiguration(
             findings.push({
               severity: tradeOffSeverity(relation.strength),
               message: `Trade-off warning: '${selectedName}' (descendant of '${ancestor}') and '${right}' are in the same priority group, but '${ancestor}' ${relation.relation} '${right}'. Consider adjusting priority groups.`,
-              node: relation,
+              node: config,
+              property: "priorityGroups",
             });
           }
         }
@@ -1000,6 +1002,18 @@ function normalizeScore(
  */
 export class FodaMsValidator {
   checkModel(model: Model, accept: ValidationAcceptor): void {
+    // Validate unique configuration names.
+    const configNames = new Set<string>();
+    for (const config of model.configurations) {
+      if (configNames.has(config.name)) {
+        accept("error", `Duplicate configuration name '${config.name}'. Each configuration must have a unique ID.`, {
+          node: config,
+          property: "name",
+        });
+      }
+      configNames.add(config.name);
+    }
+
     for (const config of model.configurations) {
       const result = analyzeModel(model, config);
       for (const finding of result.findings) {

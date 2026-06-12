@@ -269,7 +269,7 @@ evidences {
     valedesigning2022;
 }
 
-configuration default {
+configuration MyApp1 {
     domain = IoT;
     priority Highest {
         FunctionalSuitability;
@@ -327,7 +327,7 @@ configuration default {
     }
 
 }
-configuration default {
+configuration MyApp2 {
     domain = IoT;
     priority High {
       FunctionalSuitability;
