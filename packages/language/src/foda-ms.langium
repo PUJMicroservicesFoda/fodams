@@ -15,7 +15,10 @@ DomainSection:
     '}';
 
 DomainItem:
-    name=ID ';';
+    name=ID (domainFocusBlock=DomainFocusBlock)? ';';
+
+DomainFocusBlock:
+    '{' domainFocus+=[QualityAttributeDeclaration:ID] (';' domainFocus+=[QualityAttributeDeclaration:ID])* ';'? '}';
 
 QualityAttributesSection:
     'qualityAttributes' '{'
@@ -80,6 +83,7 @@ TradeOffSection:
     '}';
 
 TradeOffRelation:
+    (direction=DirectionModifier)?
     left=[QualityAttributeDeclaration:ID]
     relation=TradeOffKind
     right=[QualityAttributeDeclaration:ID]
@@ -95,6 +99,9 @@ TradeOffRelation:
 
 EvidenceRef:
     evidence=[EvidencesDeclaration:ID];
+
+DirectionModifier returns string:
+    'increasing' | 'reducing';
 
 EvidencesSection:
     'evidences' '{'

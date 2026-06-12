@@ -3,6 +3,7 @@ import { AbstractFormatter, Formatting } from 'langium/lsp';
 import {
     isAlternativeRelation,
     isConfiguration,
+    isDomainFocusBlock,
     isDomainSection,
     isEvidencesSection,
     isFeatureNode,
@@ -40,6 +41,17 @@ export class FodaMsFormatter extends AbstractFormatter {
             close.prepend(Formatting.newLine()).append(Formatting.newLine());
             formatter.interior(open, close).prepend(Formatting.indent());
             formatter.properties('domains').prepend(Formatting.newLine());
+            return;
+        }
+
+        if (isDomainFocusBlock(node)) {
+            const formatter = this.getNodeFormatter(node);
+            const open = formatter.keyword('{');
+            const close = formatter.keyword('}');
+            open.prepend(Formatting.oneSpace()).append(Formatting.newLine());
+            close.prepend(Formatting.newLine()).append(Formatting.newLine());
+            formatter.interior(open, close).prepend(Formatting.indent());
+            formatter.keyword(';').prepend(Formatting.noSpace()).append(Formatting.newLine());
             return;
         }
 
@@ -175,6 +187,9 @@ export class FodaMsFormatter extends AbstractFormatter {
 
         if (isTradeOffRelation(node)) {
             const formatter = this.getNodeFormatter(node);
+            if (node.direction) {
+                formatter.property('direction').append(Formatting.oneSpace());
+            }
             formatter.property('relation').surround(Formatting.oneSpace());
 
             const hasBody =

@@ -819,6 +819,73 @@ describe('Validating', () => {
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).toEqual(expect.stringContaining("same priority group"));
     });
+
+    test('domain focus warns about low-priority attributes', async () => {
+        document = await parse(`
+            domain {
+                IoT {
+                    Performance;
+                    Latency;
+                };
+            }
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance higher is better;
+                quality Latency lower is better;
+            }
+            featureTree QualityAttributes {
+                optional Performance {
+                    optional Latency;
+                };
+            };
+            constraints { }
+            tradeOffs { }
+            configuration default {
+                domain = IoT;
+                priority High { QualityAttributes; Performance; }
+                priority Low { Latency; }
+            }
+        `);
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        expect(output).toEqual(expect.stringContaining("Domain-focus attribute 'Latency'"));
+        expect(output).toEqual(expect.stringContaining("low-priority group"));
+    });
+
+    test('reducing flips tradeoff synergy: reduces + reducing = net increases → suppress warning', async () => {
+        document = await parse(`
+            domain { all; }
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance higher is better;
+                quality Latency higher is better;
+            }
+            featureTree QualityAttributes { optional Performance; optional Latency; };
+            constraints { }
+            tradeOffs { reducing Performance reduces Latency { } }
+            configuration default { priority High { Performance; Latency; } }
+        `);
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        // reducing + reduces = net increases, same direction → synergy → no warning
+        expect(output).not.toEqual(expect.stringContaining("same priority group"));
+    });
+
+    test('reducing flips tradeoff conflict: reducing + increases = net reduces → keep warning', async () => {
+        document = await parse(`
+            domain { all; }
+            qualityAttributes {
+                quality QualityAttributes;
+                quality Performance higher is better;
+                quality Latency higher is better;
+            }
+            featureTree QualityAttributes { optional Performance; optional Latency; };
+            constraints { }
+            tradeOffs { reducing Performance increases Latency { } }
+            configuration default { priority High { Performance; Latency; } }
+        `);
+        const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
+        // reducing + increases = net reduces, same direction → conflict → keep warning
+        expect(output).toEqual(expect.stringContaining("same priority group"));
+    });
 });
 
 function checkDocumentValid(document: LangiumDocument): string | undefined {

@@ -1,12 +1,27 @@
 domain {
-  all;
+  all {
+    Performance;
+    Reliability;
+  };
   e-commerce;
   web;
-  IoT;
-  CPS;
-  reactive;
+  IoT {
+    Security;
+    EnergyConsumption;
+  };
+  CPS {
+    Security;
+    EnergyConsumption;
+  };
+  reactive {
+    Elasticity;
+    Interoperability;
+  };
   batch;
-  e-health;
+  e-health {
+    Elasticity;
+    Interoperability;
+  };
   messaging;
 }
 
@@ -119,132 +134,104 @@ constraints {
 }
 
 tradeOffs {
-
-  Consistency increases Latency {
+  increasing Consistency increases Latency {
     strength = high;
     evidence = [abadiconsistency2012, bermbachquality2017];
   }
-
-  Granularity increases Latency {
+  increasing Granularity increases Latency {
     strength = medium;
     evidence = [shadijamicroservices2017];
   }
-
-  Granularity increases Deployability {
+  increasing Granularity increases Deployability {
     strength = medium;
     evidence=[rosacharm2023];
   }
-
-  Granularity reduces Consistency {
+  increasing Granularity reduces Consistency {
     strength = medium;
     evidence=[rosacharm2023];
   }
-
-  Granularity reduces Coupling {
+  increasing Granularity reduces Coupling {
     strength = medium;
     evidence=[rosacharm2023];
   }
-
-  Granularity increases Complexity {
+  increasing Granularity increases Complexity {
     strength = medium;
     evidence=[rosacharm2023];
   }
-
-  Security reduces Performance {
+  increasing Security reduces Performance {
     strength = medium;
     evidence=[bermbachquality2017, rezaeinasabempirical2023];
   }
-
-  Security reduces Scalability {
+  increasing Security reduces Scalability {
     strength = medium;
     evidence=[rezaeinasabempirical2023];
   }
-
-  Security reduces Maintainability {
+  increasing Security reduces Maintainability {
     strength = medium;
     evidence=[rezaeinasabempirical2023];
   }
-
-  Security increases Complexity {
+  increasing Security increases Complexity {
     strength = medium;
     evidence=[rezaeinasabempirical2023, valedesigning2022];
   }
-
-  Security reduces Availability {
+  increasing Security reduces Availability {
     strength = medium;
     evidence=[rezaeinasabempirical2023];
   }
-
-  Security increases Coupling {
+  increasing Security increases Coupling {
     strength = medium;
     evidence=[rezaeinasabempirical2023];
   }
-
-  Granularity increases Scalability {
+  increasing Granularity increases Scalability {
     strength = medium;
     evidence=[rosacharm2023];
   }
-
-  Scalability increases EnergyConsumption {
+  increasing Scalability increases EnergyConsumption {
     strength = medium;
     evidence=[araujoenergy2024];
   }
-
-  Performance increases EnergyConsumption {
+  increasing Performance increases EnergyConsumption {
     strength = medium;
     evidence=[araujoenergy2024, pincirolimodular2023];
   }
-
-  Availability increases EnergyConsumption {
+  increasing Availability increases EnergyConsumption {
     strength = medium;
     evidence=[araujoenergy2024];
   }
-
-  Elasticity reduces EnergyConsumption {
+  increasing Elasticity reduces EnergyConsumption {
     strength = medium;
     evidence=[araujoenergy2024];
   }
-
-  ResourceUtilization increases EnergyConsumption {
+  increasing ResourceUtilization increases EnergyConsumption {
     strength = medium;
     evidence=[dingaempirical2023];
   }
-
-  Availability increases Complexity {
+  increasing Availability increases Complexity {
     strength = medium;
     evidence=[valedesigning2022];
   }
-
-  Security increases Complexity {
+  increasing Security increases Complexity {
     strength = medium;
     evidence=[valedesigning2022];
   }
-
-  Scalability increases Complexity {
+  increasing Scalability increases Complexity {
     strength = medium;
     evidence=[valedesigning2022];
   }
-
-  Performance increases Complexity {
+  increasing Performance increases Complexity {
     strength = medium;
     evidence=[valedesigning2022];
   }
-
-  Scalability reduces Consistency {
+  increasing Scalability reduces Consistency {
     strength = medium;
     evidence=[valedesigning2022];
   }
-
-  // reducing
-  Coupling reduces Performance {
-    strength = medium;
-    evidence=[valedesigning2022];
-  }
-
   
-  
+  reducing Coupling reduces Performance {
+    strength = medium;
+    evidence=[valedesigning2022];
+  }
 
-  
 
 }
 
@@ -278,10 +265,6 @@ configuration MyApp1 {
         Integrity;
         Authenticity;
 
-        Throughput;
-        ResourceUtilization;
-        Elasticity;
-        ExecutionCost;
 
         Compatibility;
         Interoperability;
@@ -299,21 +282,25 @@ configuration MyApp1 {
         Flexibility;
 
         Portability;
-        Security;
         Adaptability;
+        Security;
+        EnergyConsumption;
     }
 
     priority High {
+        Elasticity;
+        Throughput;
         Availability;
         Scalability;
         Performance;
+        ResourceUtilization;
+        ExecutionCost;
         Maintainability;
         Latency;
 
     }
 
     priority Medium {
-        EnergyConsumption;
         Complexity;
     }
 
@@ -332,12 +319,16 @@ configuration MyApp2 {
     priority High {
       FunctionalSuitability;
       // Availability and Latency are potential conflicts, so they should be in a different priority groups
+      // In addition, Energy Consumption is highly important in IoT, so it should have high priority
       EnergyConsumption; 
+      Security;
       Portability;
     }
     priority Medium {
       Latency;
       Availability; 
     }
-    priority Low { }
+    priority Low { 
+
+    }
 }

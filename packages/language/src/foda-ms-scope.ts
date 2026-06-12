@@ -6,7 +6,7 @@ export class FodaMsScopeProvider extends DefaultScopeProvider {
     override getScope(context: ReferenceInfo) {
         let scope = super.getScope(context);
 
-        if (context.property === 'feature' || context.property === 'left' || context.property === 'right' || context.property === 'selected') {
+        if (context.property === 'feature' || context.property === 'left' || context.property === 'right' || context.property === 'selected' || context.property === 'domainFocus') {
             const model = getModelContainer(context.container);
             if (model) {
                 scope = this.createScopeForNodes(model.qualityAttributes.declarations, scope);

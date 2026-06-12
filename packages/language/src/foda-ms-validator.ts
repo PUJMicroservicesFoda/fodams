@@ -342,6 +342,15 @@ function tradeOffWeight(strength: TradeOffStrength | undefined): number {
   }
 }
 
+function effectiveRelation(
+  rel: { direction?: string | null; relation: string },
+): 'increases' | 'reduces' {
+  if (rel.direction === 'reducing') {
+    return rel.relation === 'increases' ? 'reduces' : 'increases';
+  }
+  return rel.relation as 'increases' | 'reduces';
+}
+
 function tradeOffSeverity(strength: TradeOffStrength | undefined): FindingSeverity {
   switch (strength) {
     case "high":
@@ -385,13 +394,14 @@ function sameGroupWarningApplies(
   if (!samePriorityGroup) {
     return false;
   }
+  const effRel = effectiveRelation(relation);
   const leftDirection = relation.left.ref?.direction?.kind;
   const rightDirection = relation.right.ref?.direction?.kind;
   // If either direction is missing, keep existing behavior (always warn).
   if (!leftDirection || !rightDirection) {
     return true;
   }
-  if (relation.relation === "increases") {
+  if (effRel === "increases") {
     // Synergy when both have same direction — suppress warning.
     return leftDirection !== rightDirection;
   }
@@ -421,6 +431,7 @@ function evaluateTradeOffRelation(
   const weight = tradeOffWeight(relation.strength);
   const leftGroup = priorityGroupByFeature.get(left);
   const rightGroup = priorityGroupByFeature.get(right);
+  const effRel = effectiveRelation(relation);
   const samePriorityGroup =
     leftSelected &&
     rightSelected &&
@@ -432,7 +443,7 @@ function evaluateTradeOffRelation(
     return undefined;
   }
 
-  if (relation.relation === "increases") {
+  if (effRel === "increases") {
     const warningMessage = sameGroupWarningApplies(relation, samePriorityGroup)
       ? `Trade-off warning: '${left}' increases '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
       : undefined;
@@ -443,7 +454,7 @@ function evaluateTradeOffRelation(
     };
   }
 
-  if (relation.relation === "reduces") {
+  if (effRel === "reduces") {
     const warningMessage = sameGroupWarningApplies(relation, samePriorityGroup)
       ? `Trade-off warning: '${left}' reduces '${right}', but both are in the same priority group. Consider putting them in different priority groups.`
       : undefined;
@@ -777,7 +788,8 @@ function evaluateConfiguration(
           continue;
         }
 
-        if (relation.relation !== "increases" && relation.relation !== "reduces") {
+        const effRel = effectiveRelation(relation);
+        if (effRel !== "increases" && effRel !== "reduces") {
           continue;
         }
 
@@ -805,7 +817,7 @@ function evaluateConfiguration(
           const rightDir = rightDecl?.direction?.kind;
           let shouldWarn = true;
           if (leftDir && rightDir) {
-            if (relation.relation === "increases") {
+            if (effRel === "increases") {
               shouldWarn = leftDir !== rightDir;
             } else {
               shouldWarn = leftDir === rightDir;
@@ -876,6 +888,30 @@ function evaluateConfiguration(
         findings.push({
           severity: tradeOffSeverity(undefined),
           message: `Trade-off warning: '${leftName}' and '${rightName}' have a conflicting transitive relationship and are in the same priority group. Consider putting them in different priority groups.`,
+          node: config,
+          property: "priorityGroups",
+        });
+      }
+    }
+  }
+
+  // Domain focus validation: warn when a domain-focus attribute
+  // is not in the top quarter of the priority groups.
+  const configDomainRef = config.domainSelection?.ref;
+  if (configDomainRef) {
+    const domainFocus = configDomainRef.domainFocusBlock?.domainFocus ?? [];
+    const nGroups = config.priorityGroups.length;
+    const firstQuarterCount = Math.max(1, Math.floor(nGroups / 4));
+    for (const focusRef of domainFocus) {
+      const featureName = focusRef.ref?.name;
+      if (!featureName) continue;
+      if (!selectedSet.has(featureName)) continue;
+      const group = priorityGroupByFeature.get(featureName);
+      if (group === undefined) continue;
+      if (group >= firstQuarterCount) {
+        findings.push({
+          severity: "warning",
+          message: `Domain-focus attribute '${featureName}' is in a low-priority group (group ${group + 1} of ${nGroups}) but is important for domain '${configDomainRef.name}'. Consider moving it to a higher-priority group.`,
           node: config,
           property: "priorityGroups",
         });
