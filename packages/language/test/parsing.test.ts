@@ -65,7 +65,7 @@ describe('Parsing tests', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; FunctionalSuitability; Granularity; CoarseGranularity; }
                 priority Low { Performance; Latency; }
             }
@@ -90,7 +90,7 @@ describe('Parsing tests', () => {
                         'Latency',
                         'Throughput'
                 ]);
-                expect(model.configuration.priorityGroups.flatMap(group => group.selected.map(selected => selected.$refText))).toEqual([
+                expect(model.configurations[0].priorityGroups.flatMap(group => group.selected.map(selected => selected.$refText))).toEqual([
                         'QualityAttributes',
                         'FunctionalSuitability',
                         'Granularity',

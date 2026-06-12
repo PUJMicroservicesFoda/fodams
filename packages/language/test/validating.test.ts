@@ -57,7 +57,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Security; Performance; }
                 priority Medium { Availability; }
                 priority Low { Latency; }
@@ -97,7 +97,7 @@ describe('Validating', () => {
             tradeOffs {
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Security; }
             }
         `);
@@ -145,7 +145,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Performance; Reliability; }
                 priority Low { Scalability; }
             }
@@ -155,7 +155,7 @@ describe('Validating', () => {
         expect(output).toEqual(expect.stringContaining("Trade-off contradiction: 'Performance' increases 'Reliability' and 'Performance' reduces 'Reliability'."));
         expect(output).toEqual(expect.stringContaining("Trade-off contradiction: 'Performance' increases 'Scalability' and 'Performance' reduces 'Scalability'."));
 
-        const analysis = analyzeModel(document!.parseResult.value);
+        const analysis = analyzeModel(document!.parseResult.value, document!.parseResult.value.configurations[0]);
         expect(analysis.activeTradeOffs).toBe(5);
         expect(analysis.maxValidConfigurations).toBe(0);
     });
@@ -185,7 +185,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Consistency; Availability; }
             }
         `);
@@ -220,7 +220,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Security; Performance; }
             }
         `);
@@ -256,7 +256,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Security; Performance; }
             }
         `);
@@ -294,7 +294,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Latency; Security; }
             }
         `);
@@ -331,7 +331,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Latency; Throughput; }
             }
         `);
@@ -369,7 +369,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Performance; Latency; Security; }
             }
         `);
@@ -414,7 +414,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; TailLatency; Availability; }
             }
         `);
@@ -451,7 +451,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { QualityAttributes; Latency; }
                 priority Low { Security; }
             }
@@ -497,7 +497,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { 
                     A;
                 }
@@ -507,7 +507,7 @@ describe('Validating', () => {
             }
         `);
 
-        const analysis = analyzeModel(document!.parseResult.value);
+        const analysis = analyzeModel(document!.parseResult.value, document!.parseResult.value.configurations[0]);
         expect(analysis.maxValidConfigurations).toBe(5);
         expect(analysis.totalCombinations).toBe(9);
     });
@@ -545,13 +545,13 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 domain = IoT;
                 priority High { A; B; C; }
             }
         `);
 
-        const analysis = analyzeModel(document!.parseResult.value);
+        const analysis = analyzeModel(document!.parseResult.value, document!.parseResult.value.configurations[0]);
         // Only the IoT trade-off (A increases B) should be active; the batch trade-off is excluded.
         expect(analysis.activeTradeOffs).toBe(1);
     });
@@ -586,13 +586,13 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 domain = batch;
                 priority High { A; B; C; }
             }
         `);
 
-        const analysis = analyzeModel(document!.parseResult.value);
+        const analysis = analyzeModel(document!.parseResult.value, document!.parseResult.value.configurations[0]);
         // Bodyless trade-off always applies; IoT-specific trade-off is excluded for batch domain.
         expect(analysis.activeTradeOffs).toBe(1);
     });
@@ -630,12 +630,12 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 priority High { A; B; C; }
             }
         `);
 
-        const analysis = analyzeModel(document!.parseResult.value);
+        const analysis = analyzeModel(document!.parseResult.value, document!.parseResult.value.configurations[0]);
         // No domain selected in config → all trade-offs apply.
         expect(analysis.activeTradeOffs).toBe(2);
     });
@@ -675,13 +675,13 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 domain = IoT;
                 priority High { A; B; C; }
             }
         `);
 
-        const analysis = analyzeModel(document!.parseResult.value);
+        const analysis = analyzeModel(document!.parseResult.value, document!.parseResult.value.configurations[0]);
         // Both should be active: domain=all wildcard matches IoT, batch tradeoff excluded.
         expect(analysis.activeTradeOffs).toBe(1);
     });
@@ -714,7 +714,7 @@ describe('Validating', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 domain = IoT;
                 priority High { Consistency; Availability; }
             }
@@ -738,7 +738,7 @@ describe('Validating', () => {
             };
             constraints { }
             tradeOffs { Consistency increases Availability { } }
-            configuration { priority High { Consistency; Availability; } }
+            configuration default { priority High { Consistency; Availability; } }
         `);
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).not.toEqual(expect.stringContaining("same priority group"));
@@ -757,7 +757,7 @@ describe('Validating', () => {
             };
             constraints { }
             tradeOffs { Performance increases Latency { } }
-            configuration { priority High { Performance; Latency; } }
+            configuration default { priority High { Performance; Latency; } }
         `);
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).toEqual(expect.stringContaining("same priority group"));
@@ -776,7 +776,7 @@ describe('Validating', () => {
             };
             constraints { }
             tradeOffs { Consistency reduces Availability { } }
-            configuration { priority High { Consistency; Availability; } }
+            configuration default { priority High { Consistency; Availability; } }
         `);
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).toEqual(expect.stringContaining("same priority group"));
@@ -795,7 +795,7 @@ describe('Validating', () => {
             };
             constraints { }
             tradeOffs { Security reduces EnergyConsumption { } }
-            configuration { priority High { Security; EnergyConsumption; } }
+            configuration default { priority High { Security; EnergyConsumption; } }
         `);
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).not.toEqual(expect.stringContaining("same priority group"));
@@ -814,7 +814,7 @@ describe('Validating', () => {
             };
             constraints { }
             tradeOffs { Consistency reduces Availability { } }
-            configuration { priority High { Consistency; Availability; } }
+            configuration default { priority High { Consistency; Availability; } }
         `);
         const output = checkDocumentValid(document) || document?.diagnostics?.map(diagnosticToString)?.join('\n');
         expect(output).toEqual(expect.stringContaining("same priority group"));

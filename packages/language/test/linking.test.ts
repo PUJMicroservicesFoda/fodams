@@ -57,7 +57,7 @@ describe('Linking tests', () => {
                 }
             }
 
-            configuration {
+            configuration default {
                 domain = web;
                 priority High { QualityAttributes; Security; Availability; }
             }
@@ -71,7 +71,7 @@ describe('Linking tests', () => {
             checkDocumentValid(document)
                 || [
                     document.parseResult.value.tree.root,
-                    ...document.parseResult.value.configuration.priorityGroups.flatMap(group =>
+                    ...document.parseResult.value.configurations[0].priorityGroups.flatMap(group =>
                         group.selected.map(s => s.ref?.name || s.error?.message)
                     ),
                     ...document.parseResult.value.hardConstraints.constraints.map(c =>

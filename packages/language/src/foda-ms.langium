@@ -7,7 +7,7 @@ entry Model:
     hardConstraints=HardConstraintSection
     tradeOffs=TradeOffSection
     evidenceDeclarations=EvidencesSection?
-    configuration=Configuration;
+    configurations+=Configuration+;
 
 DomainSection:
     'domain' '{'
@@ -111,7 +111,7 @@ TradeOffStrength returns string:
     'low' | 'medium' | 'high';
 
 Configuration:
-    'configuration' '{'
+    'configuration' name=ID '{'
         ('domain' '=' domainSelection=[DomainItem:ID] ';')?
         priorityGroups+=PriorityGroup+
     '}';

@@ -25,7 +25,7 @@ export class FodaMsFormatter extends AbstractFormatter {
     protected override format(node: AstNode): void {
         if (isModel(node)) {
             const formatter = this.getNodeFormatter(node);
-            formatter.properties('qualityAttributes', 'tree', 'hardConstraints', 'tradeOffs', 'evidenceDeclarations', 'configuration')
+            formatter.properties('qualityAttributes', 'tree', 'hardConstraints', 'tradeOffs', 'evidenceDeclarations', 'configurations')
                 .prepend(Formatting.noIndent())
                 .prepend(Formatting.newLine());
             return;
@@ -217,6 +217,7 @@ export class FodaMsFormatter extends AbstractFormatter {
         if (isConfiguration(node)) {
             const formatter = this.getNodeFormatter(node);
             formatter.keyword('configuration').append(Formatting.oneSpace());
+            formatter.property('name').append(Formatting.oneSpace());
             const open = formatter.keyword('{');
             const close = formatter.keyword('}');
 

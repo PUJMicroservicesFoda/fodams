@@ -9,6 +9,7 @@ import {
   type Model,
   type TradeOffRelation,
   type TradeOffStrength,
+  type Configuration,
 } from "./generated/ast.js";
 import type { FodaMsServices } from "./foda-ms-module.js";
 
@@ -86,7 +87,7 @@ export function registerValidationChecks(services: FodaMsServices) {
   registry.register(checks, validator);
 }
 
-export function analyzeModel(model: Model): AnalysisResult {
+export function analyzeModel(model: Model, config: Configuration): AnalysisResult {
   const findings: AnalysisFinding[] = [];
 
   const treeContext = collectTreeAnalysis(model.tree);
@@ -97,7 +98,7 @@ export function analyzeModel(model: Model): AnalysisResult {
   for (const [
     groupIndex,
     group,
-  ] of model.configuration.priorityGroups.entries()) {
+  ] of config.priorityGroups.entries()) {
     for (const selected of group.selected) {
       const featureName = selected.ref?.name;
       if (!featureName) {
@@ -133,6 +134,7 @@ export function analyzeModel(model: Model): AnalysisResult {
     treeContext,
     expandedSet,
     priorityGroupByFeature,
+    config,
   );
   findings.push(...configurationResult.findings);
 
@@ -141,7 +143,7 @@ export function analyzeModel(model: Model): AnalysisResult {
     configurationResult.minScore,
     configurationResult.maxScore,
   );
-  const estimation = estimateValidConfigurations(model, treeContext);
+  const estimation = estimateValidConfigurations(model, treeContext, config);
   const maxValidConfigurations = Math.round(estimation.estimate);
 
   return {
@@ -595,6 +597,7 @@ function evaluateConfiguration(
   treeContext: TreeAnalysisContext,
   selectedSet: Set<string>,
   priorityGroupByFeature: Map<string, number>,
+  config: Configuration,
 ): ConfigurationAnalysisResult {
   const findings: AnalysisFinding[] = [];
 
@@ -603,7 +606,7 @@ function evaluateConfiguration(
       findings.push({
         severity: "error",
         message: `Selected feature '${selectedName}' is not present in the feature tree.`,
-        node: model.configuration,
+        node: model,
         property: "priorityGroups",
       });
     }
@@ -656,7 +659,7 @@ function evaluateConfiguration(
     }
   }
 
-  const configDomain = model.configuration.domainSelection?.ref?.name;
+  const configDomain = config.domainSelection?.ref?.name;
 
   for (const constraint of model.hardConstraints.constraints) {
     const left = constraint.left.ref?.name;
@@ -808,10 +811,11 @@ function evaluateConfiguration(
 function estimateValidConfigurations(
   model: Model,
   treeContext: TreeAnalysisContext,
+  config: Configuration,
 ): MonteCarloEstimate {
   const declarations = model.qualityAttributes.declarations;
   const nElements = declarations.length;
-  const mBuckets = model.configuration.priorityGroups.length + 1;
+  const mBuckets = config.priorityGroups.length + 1;
   const totalSpace = Math.pow(mBuckets, nElements);
 
   if (
@@ -830,7 +834,7 @@ function estimateValidConfigurations(
     featureIndexByName.set(declaration.name, index);
   });
 
-  const configDomain = model.configuration.domainSelection?.ref?.name;
+  const configDomain = config.domainSelection?.ref?.name;
 
   const forbiddenPairSet = new Set<string>();
   for (const relation of model.tradeOffs.relations) {
@@ -996,12 +1000,14 @@ function normalizeScore(
  */
 export class FodaMsValidator {
   checkModel(model: Model, accept: ValidationAcceptor): void {
-    const result = analyzeModel(model);
-    for (const finding of result.findings) {
-      accept(finding.severity, finding.message, {
-        node: finding.node,
-        property: finding.property,
-      });
+    for (const config of model.configurations) {
+      const result = analyzeModel(model, config);
+      for (const finding of result.findings) {
+        accept(finding.severity, finding.message, {
+          node: finding.node,
+          property: finding.property,
+        });
+      }
     }
   }
 }

@@ -32,6 +32,6 @@ tradeOffs {
     }
 }
 
-configuration {
+configuration default {
     priority High { QualityAttributes; Security; Performance; Availability; }
 }

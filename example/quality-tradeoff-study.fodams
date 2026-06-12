@@ -70,7 +70,7 @@ tradeOffs {
     Availability increases HighEnergyConsumption;
 }
 
-configuration {
+configuration default {
     priority High {
         QualityAttributes;
         FunctionalSuitability;

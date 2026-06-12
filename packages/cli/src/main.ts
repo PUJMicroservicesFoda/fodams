@@ -18,23 +18,27 @@ export const analyzeAction = async (fileName: string, opts: GenerateOptions): Pr
     const document = await extractDocument(fileName, services, { failOnError: false });
     const model = await extractAstNode<Model>(fileName, services, { failOnError: false });
     const generatedFilePath = generateAnalysisReport(model, fileName, opts.destination);
-    const analysis = analyzeModel(model);
 
     console.log(chalk.green(`Analysis report generated successfully: ${generatedFilePath}`));
-    console.log(chalk.cyan(`Normalized score: ${analysis.score}/100`));
-    console.log(chalk.cyan(`Max valid configurations: ${analysis.maxValidConfigurations}`));
-    console.log(chalk.cyan(`Total combinations: ${analysis.totalCombinations}`));
 
-    if (analysis.findings.length > 0) {
-        console.log(chalk.cyan(`Findings: ${analysis.findings.length}`));
-        for (const finding of analysis.findings) {
-            const text = formatAnalysisFinding(finding);
-            if (finding.severity === 'error') {
-                console.log(chalk.red(`- ${text}`));
-            } else if (finding.severity === 'warning') {
-                console.log(chalk.yellow(`- ${text}`));
-            } else {
-                console.log(chalk.blue(`- ${text}`));
+    for (const config of model.configurations) {
+        const analysis = analyzeModel(model, config);
+        console.log(chalk.cyan(`\nConfiguration: ${config.name}`));
+        console.log(chalk.cyan(`Normalized score: ${analysis.score}/100`));
+        console.log(chalk.cyan(`Max valid configurations: ${analysis.maxValidConfigurations}`));
+        console.log(chalk.cyan(`Total combinations: ${analysis.totalCombinations}`));
+
+        if (analysis.findings.length > 0) {
+            console.log(chalk.cyan(`Findings: ${analysis.findings.length}`));
+            for (const finding of analysis.findings) {
+                const text = formatAnalysisFinding(finding);
+                if (finding.severity === 'error') {
+                    console.log(chalk.red(`- ${text}`));
+                } else if (finding.severity === 'warning') {
+                    console.log(chalk.yellow(`- ${text}`));
+                } else {
+                    console.log(chalk.blue(`- ${text}`));
+                }
             }
         }
     }

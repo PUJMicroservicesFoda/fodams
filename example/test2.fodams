@@ -20,7 +20,7 @@ tradeOffs {
     }
 }
 
-configuration {
+configuration default {
     priority High { 
         A;
     }

@@ -20,7 +20,7 @@ qualityAttributes {
     quality Integrity higher is better;
     quality Authenticity higher is better;
 
-    quality PerformanceEfficiency higher is better;
+    quality Performance higher is better;
     quality TimeBehavior;
     quality Latency lower is better;
     quality Throughput higher is better;
@@ -60,7 +60,7 @@ featureTree QualityAttributes {
         optional Granularity;
     };
 
-    optional PerformanceEfficiency {
+    optional Performance {
         optional TimeBehavior {
           optional Latency;
           optional Throughput;
@@ -113,7 +113,6 @@ constraints {
   // distributed microservices, Consistency and Availability
   // are mutually exclusive at their maximum levels.
   Consistency excludes Availability {
-      domain = all;
       evidence = [gilbertbrewers2002, rossiconsistency2019, abadiconsistency2012];
   }
   
@@ -121,155 +120,131 @@ constraints {
 
 tradeOffs {
 
-  // ─── CAP / PACELC ────────────────────────────────────────────────────────
-
   Consistency increases Latency {
-    domain = all;
     strength = high;
     evidence = [abadiconsistency2012, bermbachquality2017];
   }
 
-  // ─── Granularity / Coupling ───────────────────────────────────────────────
-
-  Granularity reduces PerformanceEfficiency {
-    domain = [e-commerce, web, reactive];
-    strength = high;
-    evidence = [shadijamicroservices2017, rosacharm2023, bentocost-availability2023];
-  }
-
-  Granularity increases Complexity {
-    domain = [e-commerce, web, reactive];
+  Granularity increases Latency {
     strength = medium;
-    evidence = [rosacharm2023];
+    evidence = [shadijamicroservices2017];
   }
 
-  Granularity reduces Coupling {
-    domain = all;
-    strength = high;
-    evidence = [rosacharm2023];
+  Granularity increases Deployability {
+    strength = medium;
+    evidence=[rosacharm2023];
   }
 
   Granularity reduces Consistency {
-    domain = all;
-    strength = high;
-    evidence = [rosacharm2023, rossi_consistency_2019, de_lauretis_monolithic_2019];
-  }
-
-  Coupling reduces PerformanceEfficiency {
-    domain = [e-commerce, web, reactive];
-    strength = high;
-    evidence = [rosacharm2023];
-  }
-
-  Coupling reduces Scalability {
-    domain = all;
     strength = medium;
-    evidence = [rosacharm2023, bentocost-availability2023];
+    evidence=[rosacharm2023];
   }
 
-  // ─── Security ────────────────────────────────────────────────────────────
+  Granularity reduces Coupling {
+    strength = medium;
+    evidence=[rosacharm2023];
+  }
 
-  Security reduces PerformanceEfficiency {
-    domain = [web, IoT, reactive];
-    strength = high;
-    evidence = [bermbachquality2017, rezaeinasabempirical2023];
+  Granularity increases Complexity {
+    strength = medium;
+    evidence=[rosacharm2023];
+  }
+
+  Security reduces Performance {
+    strength = medium;
+    evidence=[bermbachquality2017, rezaeinasabempirical2023];
   }
 
   Security reduces Scalability {
-    domain = [web, IoT];
     strength = medium;
-    evidence = [rezaeinasabempirical2023];
+    evidence=[rezaeinasabempirical2023];
+  }
+
+  Security reduces Maintainability {
+    strength = medium;
+    evidence=[rezaeinasabempirical2023];
   }
 
   Security increases Complexity {
-    domain = [web, IoT, reactive];
     strength = medium;
-    evidence = [rezaeinasabempirical2023, valedesigning2022];
+    evidence=[rezaeinasabempirical2023, valedesigning2022];
+  }
+
+  Security reduces Availability {
+    strength = medium;
+    evidence=[rezaeinasabempirical2023];
   }
 
   Security increases Coupling {
-    domain = [web, IoT];
     strength = medium;
-    evidence = [rezaeinasabempirical2023];
+    evidence=[rezaeinasabempirical2023];
   }
 
-  // ─── Reliability / Availability ───────────────────────────────────────────
-
-  Availability increases EnergyConsumption {
-    domain = [IoT, CPS];
-    strength = high;
-    evidence = [pincirolimodular2023, araujoenergy2024];
-  }
-
-  Availability increases Complexity {
-    domain = all;
+  Granularity increases Scalability {
     strength = medium;
-    evidence = [valedesigning2022, moghaddamfault-tolerant2019];
-  }
-
-  Availability increases Scalability {
-    domain = all;
-    strength = medium;
-    evidence = [bentocost-availability2023];
-  }
-
-  Reliability increases EnergyConsumption {
-    domain = [IoT, CPS];
-    strength = high;
-    evidence = [pincirolimodular2023, araujoenergy2024];
-  }
-
-  Reliability increases Coupling {
-    domain = IoT;
-    strength = medium;
-    evidence = [rosacharm2023, moghaddamfault-tolerant2019];
-  }
-
-  // ─── Performance / Scalability / Energy ──────────────────────────────────
-
-  PerformanceEfficiency increases EnergyConsumption {
-    domain = [IoT, CPS, batch];
-    strength = high;
-    evidence = [dingaempirical2023, pincirolimodular2023, araujoenergy2024];
-  }
-
-  PerformanceEfficiency increases Complexity {
-    domain = all;
-    strength = medium;
-    evidence = [avritzerquantitative2018, bermbachquality2017];
+    evidence=[rosacharm2023];
   }
 
   Scalability increases EnergyConsumption {
-    domain = [IoT, CPS, batch];
-    strength = high;
-    evidence = [araujoenergy2024, pincirolimodular2023];
-  }
-
-  Elasticity increases EnergyConsumption {
-    domain = [IoT, CPS, batch];
     strength = medium;
-    evidence = [araujoenergy2024, dingaempirical2023];
+    evidence=[araujoenergy2024];
   }
 
-  Scalability increases ExecutionCost {
-    domain = [web, e-commerce, batch];
-    strength = high;
-    evidence = [bentocost-availability2023, kalskechallenges2018, cojocaruattributes2019];
-  }
-
-  // ─── Maintainability / Patterns ──────────────────────────────────────────
-
-  Maintainability increases Complexity {
-    domain = all;
+  Performance increases EnergyConsumption {
     strength = medium;
-    evidence = [valedesigning2022, kalskechallenges2018];
+    evidence=[araujoenergy2024, pincirolimodular2023];
   }
 
-  Deployability increases Complexity {
-    domain = all;
+  Availability increases EnergyConsumption {
     strength = medium;
-    evidence = [rosacharm2023];
+    evidence=[araujoenergy2024];
   }
+
+  Elasticity reduces EnergyConsumption {
+    strength = medium;
+    evidence=[araujoenergy2024];
+  }
+
+  ResourceUtilization increases EnergyConsumption {
+    strength = medium;
+    evidence=[dingaempirical2023];
+  }
+
+  Availability increases Complexity {
+    strength = medium;
+    evidence=[valedesigning2022];
+  }
+
+  Security increases Complexity {
+    strength = medium;
+    evidence=[valedesigning2022];
+  }
+
+  Scalability increases Complexity {
+    strength = medium;
+    evidence=[valedesigning2022];
+  }
+
+  Performance increases Complexity {
+    strength = medium;
+    evidence=[valedesigning2022];
+  }
+
+  Scalability reduces Consistency {
+    strength = medium;
+    evidence=[valedesigning2022];
+  }
+
+  // reducing
+  Coupling reduces Performance {
+    strength = medium;
+    evidence=[valedesigning2022];
+  }
+
+  
+  
+
+  
 
 }
 
@@ -284,9 +259,9 @@ evidences {
     dingaempirical2023;
     gilbertbrewers2002;
     kalskechallenges2018;
-    moghaddamfault-tolerant2019;
-    pincirolimodular2023;
-    rezaeinasabempirical2023;
+    moghaddamfault-tolerant2019; //
+    pincirolimodular2023; //
+    rezaeinasabempirical2023; //
     rosacharm2023;
     rossi_consistency_2019;
     rossiconsistency2019;
@@ -294,67 +269,65 @@ evidences {
     valedesigning2022;
 }
 
-// configuration {
-//     domain = IoT;
-//     priority Highest {
-//         FunctionalSuitability;
+configuration default {
+    domain = IoT;
+    priority Highest {
+        FunctionalSuitability;
 
-//         Confidentiality;
-//         Integrity;
-//         Authenticity;
+        Confidentiality;
+        Integrity;
+        Authenticity;
 
-//         Throughput;
-//         ResourceUtilization;
-//         Elasticity;
-//         ExecutionCost;
+        Throughput;
+        ResourceUtilization;
+        Elasticity;
+        ExecutionCost;
 
-//         Compatibility;
-//         Interoperability;
+        Compatibility;
+        Interoperability;
 
-//         Reliability;
-//         FaultTolerance;
-//         Robustness;
-//         Resiliency;
+        Reliability;
+        FaultTolerance;
+        Robustness;
+        Resiliency;
 
-//         Maintainability;
-//         Reusability;
-//         Testability;
-//         Deployability;
-//         Extensibility;
-//         Sustainability;
-//         Flexibility;
+        Maintainability;
+        Reusability;
+        Testability;
+        Deployability;
+        Extensibility;
+        Sustainability;
+        Flexibility;
 
-//         Portability;
-//         Security;
-//         Adaptability;
-//         Granularity;
-//     }
+        Portability;
+        Security;
+        Adaptability;
+        Granularity;
+    }
 
-//     priority High {
-//         Availability;
-//         Scalability;
-//         Performance;
-//         Latency;
+    priority High {
+        Availability;
+        Scalability;
+        Performance;
+        Latency;
 
-//     }
+    }
 
-//     priority Medium {
-//         EnergyConsumption;
-//         SingleUnitDeployment;
-//     }
+    priority Medium {
+        EnergyConsumption;
+    }
 
-//     priority Low {
-//         Coupling;
-//     }
+    priority Low {
+        Coupling;
+    }
 
-//     priority Negligible {
-//         Complexity;
+    priority Negligible {
+        Complexity;
 
-//     }
+    }
 
-
-// }
-configuration {
+}
+configuration default {
     domain = IoT;
     priority High {
       FunctionalSuitability;
