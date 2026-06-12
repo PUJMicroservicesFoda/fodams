@@ -91,7 +91,15 @@ export function analyzeModel(model: Model, config: Configuration): AnalysisResul
   const findings: AnalysisFinding[] = [];
 
   const treeContext = collectTreeAnalysis(model.tree);
-  findings.push(...collectStaticFindings(model, treeContext));
+
+  // Pre-compute transitive closures for the trade-off graph.
+  const declaredNames = new Set(model.qualityAttributes.declarations.map(d => d.name));
+  const increasesGraph = buildTradeOffGraph(model, "increases");
+  const reducesGraph = buildTradeOffGraph(model, "reduces");
+  const increasesClosure = computeTransitiveClosure(declaredNames, increasesGraph);
+  const reducesClosure = computeTransitiveClosure(declaredNames, reducesGraph);
+
+  findings.push(...collectStaticFindings(model, treeContext, increasesClosure, reducesClosure));
 
   const selectedSet = new Set<string>();
   const priorityGroupByFeature = new Map<string, number>();
@@ -135,6 +143,8 @@ export function analyzeModel(model: Model, config: Configuration): AnalysisResul
     expandedSet,
     priorityGroupByFeature,
     config,
+    increasesClosure,
+    reducesClosure,
   );
   findings.push(...configurationResult.findings);
 
@@ -450,6 +460,8 @@ function evaluateTradeOffRelation(
 function collectStaticFindings(
   model: Model,
   treeContext: TreeAnalysisContext,
+  increasesClosure?: Map<string, Set<string>>,
+  reducesClosure?: Map<string, Set<string>>,
 ): AnalysisFinding[] {
   const findings: AnalysisFinding[] = [];
   const declarations = model.qualityAttributes.declarations;
@@ -482,7 +494,7 @@ function collectStaticFindings(
     }
   }
 
-  findings.push(...collectTradeOffContradictions(model, declaredNames));
+  findings.push(...collectTradeOffContradictions(model, declaredNames, increasesClosure, reducesClosure));
 
   if (duplicateDeclarations) {
     findings.push({
@@ -499,14 +511,15 @@ function collectStaticFindings(
 function collectTradeOffContradictions(
   model: Model,
   declaredNames: Set<string>,
+  increasesClosure?: Map<string, Set<string>>,
+  reducesClosure?: Map<string, Set<string>>,
 ): AnalysisFinding[] {
-  const increasesGraph = buildTradeOffGraph(model, "increases");
-  const reducesGraph = buildTradeOffGraph(model, "reduces");
-  const increasesClosure = computeTransitiveClosure(
-    declaredNames,
-    increasesGraph,
-  );
-  const reducesClosure = computeTransitiveClosure(declaredNames, reducesGraph);
+  if (!increasesClosure || !reducesClosure) {
+    const increasesGraph = buildTradeOffGraph(model, "increases");
+    const reducesGraph = buildTradeOffGraph(model, "reduces");
+    increasesClosure = computeTransitiveClosure(declaredNames, increasesGraph);
+    reducesClosure = computeTransitiveClosure(declaredNames, reducesGraph);
+  }
   const findings: AnalysisFinding[] = [];
 
   for (const source of declaredNames) {
@@ -598,8 +611,18 @@ function evaluateConfiguration(
   selectedSet: Set<string>,
   priorityGroupByFeature: Map<string, number>,
   config: Configuration,
+  increasesClosure: Map<string, Set<string>>,
+  reducesClosure: Map<string, Set<string>>,
 ): ConfigurationAnalysisResult {
   const findings: AnalysisFinding[] = [];
+
+  // Build direction map for synergy/conflict logic.
+  const directionByFeature = new Map<string, 'higher' | 'lower'>();
+  for (const decl of model.qualityAttributes.declarations) {
+    if (decl.direction) {
+      directionByFeature.set(decl.name, decl.direction.kind);
+    }
+  }
 
   for (const selectedName of selectedSet) {
     if (!treeContext.nodesByFeature.has(selectedName)) {
@@ -797,6 +820,65 @@ function evaluateConfiguration(
             });
           }
         }
+      }
+    }
+  }
+
+  // Transitive closure: check selected pairs in the same priority group
+  // for potentially conflicting relationships not covered by direct edges.
+  const directPairSet = new Set<string>();
+  for (const relation of model.tradeOffs.relations) {
+    const l = relation.left.ref?.name;
+    const r = relation.right.ref?.name;
+    if (!l || !r) continue;
+    const a = l < r ? l : r;
+    const b = l < r ? r : l;
+    directPairSet.add(`${a},${b}`);
+  }
+
+  for (const [leftName] of increasesClosure) {
+    if (!selectedSet.has(leftName)) continue;
+    const leftGroup = priorityGroupByFeature.get(leftName);
+    if (leftGroup === undefined) continue;
+    const leftDir = directionByFeature.get(leftName);
+
+    const incTargets = increasesClosure.get(leftName) ?? new Set<string>();
+    const redTargets = reducesClosure.get(leftName) ?? new Set<string>();
+
+    for (const rightName of new Set([...incTargets, ...redTargets])) {
+      if (rightName === leftName) continue;
+      if (!selectedSet.has(rightName)) continue;
+      const rightGroup = priorityGroupByFeature.get(rightName);
+      if (rightGroup === undefined || rightGroup !== leftGroup) continue;
+
+      // Skip direct edges — already handled by the direct tradeoff loop.
+      const pk = leftName < rightName ? `${leftName},${rightName}` : `${rightName},${leftName}`;
+      if (directPairSet.has(pk)) continue;
+
+      const rightDir = directionByFeature.get(rightName);
+      const inInc = incTargets.has(rightName);
+      const inRed = redTargets.has(rightName);
+
+      let shouldWarn = true;
+      if (leftDir && rightDir) {
+        if (inInc && inRed) {
+          // Contradiction — definitely a conflict.
+          shouldWarn = true;
+        } else if (inInc) {
+          // Net increases: synergy when directions match.
+          shouldWarn = leftDir !== rightDir;
+        } else {
+          // Net reduces: conflict when directions match.
+          shouldWarn = leftDir === rightDir;
+        }
+      }
+      if (shouldWarn) {
+        findings.push({
+          severity: tradeOffSeverity(undefined),
+          message: `Trade-off warning: '${leftName}' and '${rightName}' have a conflicting transitive relationship and are in the same priority group. Consider putting them in different priority groups.`,
+          node: config,
+          property: "priorityGroups",
+        });
       }
     }
   }

@@ -291,7 +291,6 @@ configuration MyApp1 {
         Robustness;
         Resiliency;
 
-        Maintainability;
         Reusability;
         Testability;
         Deployability;
@@ -302,19 +301,20 @@ configuration MyApp1 {
         Portability;
         Security;
         Adaptability;
-        Granularity;
     }
 
     priority High {
         Availability;
         Scalability;
         Performance;
+        Maintainability;
         Latency;
 
     }
 
     priority Medium {
         EnergyConsumption;
+        Complexity;
     }
 
     priority Low {
@@ -322,7 +322,7 @@ configuration MyApp1 {
     }
 
     priority Negligible {
-        Complexity;
+        Granularity;
 
     }
 
