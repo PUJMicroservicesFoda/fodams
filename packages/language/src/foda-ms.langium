@@ -15,7 +15,7 @@ DomainSection:
     '}';
 
 DomainItem:
-    name=ID (domainFocusBlock=DomainFocusBlock)? ';';
+    name=ID (domainFocusBlock=DomainFocusBlock)? ';'?;
 
 DomainFocusBlock:
     '{' domainFocus+=[QualityAttributeDeclaration:ID] (';' domainFocus+=[QualityAttributeDeclaration:ID])* ';'? '}';
@@ -45,16 +45,16 @@ ChildRelation:
     MandatoryRelation | OptionalRelation | OrRelation | AlternativeRelation;
 
 MandatoryRelation:
-    'mandatory' child=FeatureNode ';';
+    'mandatory' child=FeatureNode ';'?;
 
 OptionalRelation:
-    'optional' child=FeatureNode ';';
+    'optional' child=FeatureNode ';'?;
 
 OrRelation:
-    'or' '{' children+=FeatureNode (',' children+=FeatureNode)* '}' ';';
+    'or' '{' children+=FeatureNode (',' children+=FeatureNode)* '}' ';'?;
 
 AlternativeRelation:
-    'alternative' '{' children+=FeatureNode (',' children+=FeatureNode)* '}' ';';
+    'alternative' '{' children+=FeatureNode (',' children+=FeatureNode)* '}' ';'?;
 
 HardConstraintSection:
     'constraints' '{'

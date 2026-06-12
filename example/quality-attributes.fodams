@@ -2,26 +2,26 @@ domain {
   all {
     Performance;
     Reliability;
-  };
+  }
   e-commerce;
   web;
   IoT {
     Security;
     EnergyConsumption;
-  };
+  }
   CPS {
     Security;
     EnergyConsumption;
-  };
+  }
   reactive {
     Elasticity;
     Interoperability;
-  };
+  }
   batch;
   e-health {
     Elasticity;
     Interoperability;
-  };
+  }
   messaging;
 }
 
@@ -29,12 +29,10 @@ qualityAttributes {
     quality FunctionalSuitability higher is better;
     quality Consistency higher is better;
     quality Granularity;
-
     quality Security higher is better;
     quality Confidentiality higher is better;
     quality Integrity higher is better;
     quality Authenticity higher is better;
-
     quality Performance higher is better;
     quality TimeBehavior;
     quality Latency lower is better;
@@ -43,17 +41,14 @@ qualityAttributes {
     quality Elasticity higher is better;
     quality Scalability higher is better;
     quality ExecutionCost lower is better;
-
     quality Compatibility higher is better;
     quality Coupling lower is better;
     quality Interoperability higher is better;
-
     quality Reliability higher is better;
     quality Availability higher is better;
     quality FaultTolerance higher is better;
     quality Robustness higher is better;
     quality Resiliency higher is better;
-
     quality Maintainability higher is better;
     quality Complexity lower is better;
     quality Reusability higher is better;
@@ -64,7 +59,6 @@ qualityAttributes {
     quality EnergyConsumption lower is better;
     quality Flexibility higher is better;
     quality Modularity higher is better;
-
     quality Portability higher is better;
     quality Adaptability higher is better;
 }
@@ -73,37 +67,37 @@ featureTree QualityAttributes {
     mandatory FunctionalSuitability {
         optional Consistency;
         optional Granularity;
-    };
+    }
 
     optional Performance {
         optional TimeBehavior {
           optional Latency;
           optional Throughput;
-        };
+        }
         optional ResourceUtilization;
         optional Elasticity;
         optional Scalability;
         optional ExecutionCost;
-    };
+    }
 
 
     optional Compatibility {
         optional Interoperability;
         optional Coupling;
-    };
+    }
 
     optional Reliability {
         optional Availability;
         optional FaultTolerance;
         optional Robustness;
         optional Resiliency;
-    };
+    }
 
     optional Security {
         optional Confidentiality;
         optional Integrity;
         optional Authenticity;
-    };
+    }
 
     optional Maintainability {
         optional Complexity;
@@ -113,15 +107,15 @@ featureTree QualityAttributes {
         optional Extensibility;
         optional Sustainability {
             optional EnergyConsumption;
-        };
+        }
         optional Flexibility;
         optional Modularity;
-    };
+    }
 
     optional Portability {
         optional Adaptability;
-    };
-};
+    }
+}
 
 constraints {
   // CAP theorem: given PartitionTolerance is mandatory in
@@ -130,7 +124,6 @@ constraints {
   Consistency excludes Availability {
       evidence = [gilbertbrewers2002, rossiconsistency2019, abadiconsistency2012];
   }
-  
 }
 
 tradeOffs {
@@ -231,8 +224,6 @@ tradeOffs {
     strength = medium;
     evidence=[valedesigning2022];
   }
-
-
 }
 
 evidences {
@@ -308,27 +299,31 @@ configuration MyApp1 {
         Coupling;
     }
 
-    priority Negligible {
+    priority Lowest {
         Granularity;
 
     }
 
 }
-configuration MyApp2 {
+configuration MyApp {
     domain = IoT;
-    priority High {
+    priority Highest {
       FunctionalSuitability;
       // Availability and Latency are potential conflicts, so they should be in a different priority groups
-      // In addition, Energy Consumption is highly important in IoT, so it should have high priority
+      // In addition, EnergyConsumption and Security are very important in IoT, so they have the highest priority
       EnergyConsumption; 
       Security;
       Portability;
+      Reliability;
     }
-    priority Medium {
+    priority High {
+      // Although Performance has a priority focus for every domain, domain-specific attributes
+      // take precedence
+      Performance; 
       Latency;
       Availability; 
     }
-    priority Low { 
-
-    }
+    priority Medium { }
+    priority Low { }
+    priority Lowest { }
 }
