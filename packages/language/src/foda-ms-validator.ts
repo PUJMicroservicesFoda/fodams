@@ -896,12 +896,12 @@ function evaluateConfiguration(
   }
 
   // Domain focus validation: warn when a domain-focus attribute
-  // is not in the top quarter of the priority groups.
+  // is not in the upper half of the priority groups.
   // Checks both the selected domain and the general "all" domain.
   const configDomainRef = config.domainSelection?.ref;
   if (configDomainRef) {
     const nGroups = config.priorityGroups.length;
-    const firstQuarterCount = Math.max(1, Math.floor(nGroups / 4));
+    const firstHalfCount = Math.max(1, Math.floor(nGroups / 2));
 
     // Collect specific-domain focus refs.
     const specificRefs: Array<{ $refText: string; ref?: { name?: string } }> = [];
@@ -944,7 +944,7 @@ function evaluateConfiguration(
       if (!selectedSet.has(featureName)) continue;
       const group = priorityGroupByFeature.get(featureName);
       if (group === undefined) continue;
-      if (group >= firstQuarterCount) {
+      if (group >= firstHalfCount) {
         findings.push({
           severity: "warning",
           message: `Domain-focus attribute '${featureName}' is in a low-priority group (group ${group + 1} of ${nGroups}) but is important for domain '${configDomainRef.name}'. Consider moving it to a higher-priority group.`,
@@ -958,7 +958,7 @@ function evaluateConfiguration(
     // they may be placed in groups below the specific-domain attributes.
     if (allRefs.length > 0 && lowestSpecificGroup !== undefined) {
       const remainingGroups = nGroups - (lowestSpecificGroup + 1);
-      const allThreshold = lowestSpecificGroup + 1 + Math.max(1, Math.floor(remainingGroups / 4));
+      const allThreshold = lowestSpecificGroup + 1 + Math.max(1, Math.floor(remainingGroups / 2));
       for (const focusRef of allRefs) {
         const featureName = focusRef.ref?.name;
         if (!featureName) continue;

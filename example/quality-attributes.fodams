@@ -1,28 +1,51 @@
 domain {
-  all {
-    Performance;
+  E-commerce {
+    Granularity;
+    Consistency;
+    Scalability;
     Reliability;
+    Reusability;
+    Portability; 
   }
-  e-commerce;
-  web;
   IoT {
+    Consistency;
+    Scalability;
+    Interoperability;
+    Availability;
     Security;
     EnergyConsumption;
+    Flexibility;
+    Portability;
+  }
+  Messaging {
+    PerformanceEfficiency;
+    Availability;
+    Security;
+    Maintainability;
+    Portability;
   }
   CPS {
-    Security;
+    PerformanceEfficiency;
+    Availability;
     EnergyConsumption;
   }
-  reactive {
+  Web {
+    Latency;
+    Reliability;
+  }
+  DataAnalysis {
+    Latency;
+    ExecutionCost;
+  }
+  Batch {
+    Latency;
+    ExecutionCost;
+  }
+  E-health {
     Elasticity;
     Interoperability;
+    Adaptability;
   }
-  batch;
-  e-health {
-    Elasticity;
-    Interoperability;
-  }
-  messaging;
 }
 
 qualityAttributes {
@@ -33,7 +56,7 @@ qualityAttributes {
     quality Confidentiality higher is better;
     quality Integrity higher is better;
     quality Authenticity higher is better;
-    quality Performance higher is better;
+    quality PerformanceEfficiency higher is better;
     quality TimeBehavior;
     quality Latency lower is better;
     quality Throughput higher is better;
@@ -69,7 +92,7 @@ featureTree QualityAttributes {
         optional Granularity;
     }
 
-    optional Performance {
+    optional PerformanceEfficiency {
         optional TimeBehavior {
           optional Latency;
           optional Throughput;
@@ -151,7 +174,7 @@ tradeOffs {
     strength = medium;
     evidence=[rosacharm2023];
   }
-  increasing Security reduces Performance {
+  increasing Security reduces PerformanceEfficiency {
     strength = medium;
     evidence=[bermbachquality2017, rezaeinasabempirical2023];
   }
@@ -183,7 +206,7 @@ tradeOffs {
     strength = medium;
     evidence=[araujoenergy2024];
   }
-  increasing Performance increases EnergyConsumption {
+  increasing PerformanceEfficiency increases EnergyConsumption {
     strength = medium;
     evidence=[araujoenergy2024, pincirolimodular2023];
   }
@@ -211,7 +234,7 @@ tradeOffs {
     strength = medium;
     evidence=[valedesigning2022];
   }
-  increasing Performance increases Complexity {
+  increasing PerformanceEfficiency increases Complexity {
     strength = medium;
     evidence=[valedesigning2022];
   }
@@ -220,7 +243,7 @@ tradeOffs {
     evidence=[valedesigning2022];
   }
   
-  reducing Coupling reduces Performance {
+  reducing Coupling reduces PerformanceEfficiency {
     strength = medium;
     evidence=[valedesigning2022];
   }
@@ -247,83 +270,82 @@ evidences {
     valedesigning2022;
 }
 
-configuration MyApp1 {
-    domain = IoT;
-    priority Highest {
-        FunctionalSuitability;
+// configuration MyApp1 {
+//     domain = IoT;
+//     priority Highest {
+//         FunctionalSuitability;
 
-        Confidentiality;
-        Integrity;
-        Authenticity;
+//         Confidentiality;
+//         Integrity;
+//         Authenticity;
 
 
-        Compatibility;
-        Interoperability;
+//         Compatibility;
+//         Interoperability;
 
-        Reliability;
-        FaultTolerance;
-        Robustness;
-        Resiliency;
+//         Reliability;
+//         FaultTolerance;
+//         Robustness;
+//         Resiliency;
 
-        Reusability;
-        Testability;
-        Deployability;
-        Extensibility;
-        Sustainability;
-        Flexibility;
+//         Reusability;
+//         Testability;
+//         Deployability;
+//         Extensibility;
+//         Sustainability;
+//         Flexibility;
 
-        Portability;
-        Adaptability;
-        Security;
-        EnergyConsumption;
-    }
+//         Portability;
+//         Adaptability;
+//         Security;
+//         EnergyConsumption;
+//     }
 
-    priority High {
-        Elasticity;
-        Throughput;
-        Availability;
-        Scalability;
-        Performance;
-        ResourceUtilization;
-        ExecutionCost;
-        Maintainability;
-        Latency;
+//     priority High {
+//         Elasticity;
+//         Throughput;
+//         Availability;
+//         Scalability;
+//         PerformanceEfficiency;
+//         ResourceUtilization;
+//         ExecutionCost;
+//         Maintainability;
+//         Latency;
 
-    }
+//     }
 
-    priority Medium {
-        Complexity;
-    }
+//     priority Medium {
+//         Complexity;
+//     }
 
-    priority Low {
-        Coupling;
-    }
+//     priority Low {
+//         Coupling;
+//     }
 
-    priority Lowest {
-        Granularity;
+//     priority Lowest {
+//         Granularity;
 
-    }
+//     }
 
-}
+// }
 configuration MyApp {
     domain = IoT;
     priority Highest {
       FunctionalSuitability;
       // Availability and Latency are potential conflicts, so they should be in a different priority groups
-      // In addition, EnergyConsumption and Security are very important in IoT, so they have the highest priority
+      // EnergyConsumption, Security, Availability are important in IoT, so they have high (or highest) priority
       EnergyConsumption; 
-      Security;
       Portability;
       Reliability;
+      Security;
     }
     priority High {
-      // Although Performance has a priority focus for every domain, domain-specific attributes
-      // take precedence
-      Performance; 
-      Latency;
       Availability; 
+      Latency;
     }
-    priority Medium { }
+    priority Medium { 
+
+    }
     priority Low { }
     priority Lowest { }
 }
