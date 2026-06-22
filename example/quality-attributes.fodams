@@ -87,7 +87,7 @@ qualityAttributes {
 }
 
 featureTree QualityAttributes {
-    mandatory FunctionalSuitability {
+    optional FunctionalSuitability {
         optional Consistency;
         optional Granularity;
     }
