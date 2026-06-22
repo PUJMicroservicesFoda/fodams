@@ -332,8 +332,8 @@ configuration MyApp {
     domain = IoT;
     priority Highest {
       FunctionalSuitability;
-      // Availability and Latency are potential conflicts, so they should be in a different priority groups
-      // EnergyConsumption, Security, Availability are important in IoT, so they have high (or highest) priority
+      // Availability and Latency are potential conflicts, so the tool will warn if they are in the same priority level
+      // EnergyConsumption, Security, Availability are important in IoT, so the tool will suggest to put them in the high (or highest) priority levels
       EnergyConsumption; 
       Portability;
       Reliability;
